@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <script src="htmledit.js"></script>
+    <script>
+        var xd = new xeditor();
+        setTimeout(function () {
+            document.getElementById("bold").onclick = xd.bold;
+            document.getElementById("cut").onclick = xd.cut;
+            document.getElementById("copy").onclick = xd.copy;
+        }, 20)
+
+    </script>
+    <style>
+        <!--contenteditable获得焦点后的边框设置-->
+        [contenteditable]:focus {
+            outline: none;
+            border: 1px solid #0094ff;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="bold">bold</button>
+    <button id="cut">cut</button>
+    <button id="copy">copy</button>
+    <div contenteditable="true">
+        <p>AAA</p>
+        <p contenteditable="false">BBB</p>
+    </div>
+</body>
+
+</html>
