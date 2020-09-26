@@ -6,19 +6,19 @@ var rootJsDom,
             return this;
         }
         root = root || rootJsDom;
-        
+
         if (selector === document) {
             this[0] = selector;
             this.length = 1;
             return this;
-        }else if ( selector.nodeType ) {
-			this[ 0 ] = selector;
-			this.length = 1;
-			return this;
+        } else if (selector.nodeType) {
+            this[0] = selector;
+            this.length = 1;
+            return this;
 
-		// HANDLE: $(function)
-		// Shortcut for document ready
-		}
+            // HANDLE: $(function)
+            // Shortcut for document ready
+        }
     };
 
 // Give the init function the jsDom prototype for later instantiation
