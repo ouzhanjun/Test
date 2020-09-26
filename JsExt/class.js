@@ -1,22 +1,20 @@
 
-jsDom.fn.extend({
+jsDom.Class = {
 
     getClass: function (elem) {
         return elem.getAttribute && elem.getAttribute("class") || "";
     },
     getClasses: function (elem) {
         var className = this.getClass(elem);
-        return className ? jsDom.split(className) : [];
+        return className ? jsDom.String.splitToArray(className) : [];
     },
-    hasClass: function (value) {
-        var elem, i = 0;
-        while ((elem = this[i++])) {
-            if (elem.nodeType === 1 &&
-                this.getClasses(elem).indexOf(value) > -1) {
-                return true;
-            }
-        }
-        return false;
+    hasClass: function (elem, value) {
+        var i = 0;
+        var classes = getClasses(elem).filter(
+            function (x) {
+                return x === value;
+            });
+        return classes.length > 0;
     },
     addClass: function (value) {
         var classes, elem, cur, curValue, curValues, className, j, finalValue,
@@ -93,4 +91,4 @@ jsDom.fn.extend({
         return this;
 
     },
-});
+}

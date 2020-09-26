@@ -35,7 +35,7 @@ function resolvePromise(promise, result, resolve, reject) {
 //func 以 resolve,reject 作为参数
 jsDom.Promise = function (fn) {
     var isFunction = function (fn) {
-        return typeof fn === 'function';
+        return typeof fn === "function" && typeof fn.nodeType !== "number";
     }
     if (!isFunction(fn)) {
         throw new Error('The parameter must be a function');
