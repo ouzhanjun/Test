@@ -3,52 +3,73 @@
 jsDom.fn = {
     version: "jsDom 1.0.0",
     constructor: jsDom,
+    isArrayLike: function (obj) {
+
+        var length = !!obj && obj.length;
+
+        return Array.isArray(obj) || typeof length === "number" && length > 0 && (length - 1) in obj;
+    },
+    isPlainObject: function (obj) {
+        var proto, Ctor;
+
+        if (!obj || toString.call(obj) !== "[object Object]") {
+            return false;
+        }
+
+        proto = Object.getPrototypeOf(obj);
+
+        if (!proto) {
+            return true;
+        }
+
+        Ctor = proto.hasOwnProperty("constructor") && proto.constructor;
+        return typeof Ctor === "function" && Ctor.toString() === Object.toString();
+    },
+    isEmptyObject: function (obj) {
+        var name;
+
+        for (name in obj) {
+            return false;
+        }
+        return true;
+    },
+    isFunction: function (fn) {
+        return typeof fn === "function" && typeof fn.nodeType !== "number";
+    },
     merge: function (dest, src) {
         var len = +src.length,
-			j = 0,
-			i = dest.length;
+            j = 0,
+            i = dest.length;
 
-		for ( ; j < len; j++ ) {
-			dest[ i++ ] = src[ j ];
-		}
+        for (; j < len; j++) {
+            dest[i++] = src[j];
+        }
 
-		dest.length = i;
-
-		return dest;
+        dest.length = i;
+        return dest;
     },
     toArray: function (obj) {
         return Array.prototype.slice.call(obj);
     },
-    each: function (callback) {
-        jsDom.each(this, callback);
-    },
-    eq: function (i) {
-        var j = i < 0 ? this.length + i : i;
-        return this.AddElems((j < this.length && j >= 0) ? [this[j]] : []);
-    },
-    odd: function () {
-        return this.AddElems(jsDom.where(this, function (elem, i) {
-            return i % 2 == 0;
-        }));
-    },
-    even: function () {
-        return this.AddElems(jsDom.where(this, function (elem, i) {
-            return i % 2 != 0;
-        }));
-    },
-    first: function () {
-        if (this.length > 0) {
-            return this.eq(0);
+    each: function (obj, callback) {
+        var length, i = 0;
+
+        if (isArrayLike(obj)) {
+            length = obj.length;
+            for (; i < length; i++) {
+                if (callback.call(obj[i], i, obj[i]) === false) {
+                    break;
+                }
+            }
+        } else {
+            for (i in obj) {
+                if (callback.call(obj[i], i, obj[i]) === false) {
+                    break;
+                }
+            }
         }
-    },
-    last: function () {
-        if (this.length > 0) {
-            return this.eq(this.length - 1);
-        }
-    },
-    getElem: function (i) {
-        var j = i < 0 ? this.length + i : i;
-        return this[j];
+
+        return obj;
     },
     deepCopy: function (target, src) {
         var srcValue, isCopyArray, targetProp;
@@ -67,7 +88,7 @@ jsDom.fn = {
                     continue;
                 }
 
-                if (jsDom.validate.isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
+                if (isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
                     if (isCopyArray && !isArray(targetProp)) {
                         targetProp = [];
                     } else if (!isCopyArray && !isPlainObject(targetProp)) {
@@ -91,5 +112,5 @@ jsDom.fn = {
         }
 
         return target;
-    },
+    }
 };
