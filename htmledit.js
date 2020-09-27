@@ -1,6 +1,7 @@
 var xeditor = function () {
     var cmdNames = ["bold", "copy", "cut", "selectAll","open","saveAs","print","delete"];
-    var cmdNamesWithArgs = ["insertImage", "formatblock", "backColor"];
+    var cmdNamesWithArgs = ["insertImage", "formatblock", "backColor","FontName","FontSize"
+,"ForeColor"];
     var keyValues = {};
     for (var i in cmdNames) {
         var name = cmdNames[i];
