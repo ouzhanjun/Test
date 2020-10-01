@@ -1,51 +1,44 @@
 <!DOCTYPE html>
 <html>
-<head> 
-<meta charset="utf-8"> 
-<title>菜鸟教程(runoob.com)</title> 
 
-<script src="core.js"></script>
-<script src="init.js"></script>
-<script src="callbacks.js"></script>
-<script src="promise.js"></script>
-<script>
-const p1 = 'p1-ok';
-const p2 = jsDom.Promise.resolve('p2-ok');
-const p3 = new jsDom.Promise((resolve) => setTimeout(resolve, 3000, 'p3-ok'));
-const p4 = jsDom.Promise.reject('p4-err');
-jsDom.Promise.all([p1, p2, p3])
-    .then((resolves) => {
-    resolves.forEach(resolve => {
-        console.log(resolve); //p1-ok   p2-ok  p3-ok
-    });
-    })
-    .catch(() => {
-    console.log('err');
-    });
+<head>
+    <meta charset="utf-8">
+    <title>菜鸟教程(runoob.com)</title>
 
-    jsDom.Promise.all([p1, p2, p3, p4])
-    .then(() => {
-    console.log('ok');
-    })
-    .catch((err) => {
-        console.log(err); //p4-err
-    })
-</script>
+    <script src="core.js"></script>
+    <script src="init.js"></script>
+    <script src="callbacks.js"></script>
+    <script src="string.js"></script>
+    <script src="promise.js"></script>
+    <script>
+        var p1 = new jsDom.Promise(function () {
+            console.log("start 1");
+        });
+        p1.done(function () { console.log("done 1"); });
+        p1.catch(function (e) { console.log(e); });
+        p1.failed(function (e) { console.log(e); });
+        p1.finally(function (e) { console.log("finally 1"); });
+        p1.done(function () { console.log("done1 1"); });
+    </script>
 
 </head>
+
 <body>
-	
-<h1></h1>
-<button type="button" >点击这里</button>
-<p>锚部分为 #part5</p>
-<button onclick="myFunction()">点我</button>
-<p id="demo" class="cls1 cls2">demo</p>
-<ul class="cls1 cls2 cls3"><li>aa</li><li>bb</li><li>cc</li>
+
+    <h1></h1>
+    <button type="button">点击这里</button>
+    <p>锚部分为 #part5</p>
+    <button onclick="myFunction()">点我</button>
+    <p id="demo" class="cls1 cls2">demo</p>
+    <ul class="cls1 cls2 cls3">
+        <li>aa</li>
+        <li>bb</li>
+        <li>cc</li>
     </ul>
 </body>
 <script>
 
 
 </script>
-	
+
 </html>

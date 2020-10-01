@@ -140,7 +140,7 @@ jsDom.Promise = function (fn) {
                 });
                 break;
             case StatusCode.Pending:
-                nextPromise = new Promise(function (resolve, reject) {
+                nextPromise = new jsDom.Promise(function (resolve, reject) {
                     self.fulfilledCallbacks.add(function (value) {
                         try {
                             var result = onFulfilled(value);
@@ -201,6 +201,12 @@ jsDom.Promise = function (fn) {
             })
         })
     }
+
+    this.done = function (fn) {
+        this.then(fn);
+    }
+
+    this.fail = this.catch;
 }
 
 jsDom.Promise.race = function (promises) {

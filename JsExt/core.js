@@ -45,8 +45,9 @@ for (var i in types) {
 	var typeName = types[i];
 	if (!jsDom.validate["is" + typeName]) {
 		jsDom.validate["is" + typeName] = function (obj) {
-			return toString.call(obj) === "[object " + typeName + "]";
-		}
+			return toString.call(obj) === "[object " + arguments.callee.typeName + "]";
+		};
+		jsDom.validate["is" + typeName].typeName=typeName;
 	}
 }
 
@@ -204,7 +205,7 @@ jsDom.extend({
 	// Convert String-formatted props into Object-formatted ones
 	createProps: function (target, props, defValue) {
 		target = target || {};
-		this.each(jsDom.String.split(props), function (index, flag) {
+		this.each(jsDom.String.splitToArray(props), function (index, flag) {
 			target[flag] = defValue;
 		});
 		return target;
