@@ -32,6 +32,7 @@ function resolvePromise(promise, result, resolve, reject) {
         return resolve(result);
     }
 }
+
 //func 以 resolve,reject 作为参数
 jsDom.Promise = function (fn) {
     var isFunction = function (fn) {
@@ -201,12 +202,6 @@ jsDom.Promise = function (fn) {
             })
         })
     }
-
-    this.done = function (fn) {
-        this.then(fn);
-    }
-
-    this.fail = this.catch;
 }
 
 jsDom.Promise.race = function (promises) {
