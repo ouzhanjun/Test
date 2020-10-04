@@ -1,4 +1,4 @@
-jsDom.Deferred = function (fn) {
+jsDom.Task = function (fn) {
 
     var promise = new jsDom.Promise();
     this.done = function (fn) {
@@ -9,7 +9,7 @@ jsDom.Deferred = function (fn) {
         promise.then(undefined, fn);
         return this;
     }
-    this.work = function (fn) {
+    this.start = function (fn) {
         var val = fn;
         if (jsDom.isFunction(fn)) {
             try{
