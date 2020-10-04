@@ -15,8 +15,8 @@ jsDom.Task = function (fn) {
             try{
                 val = fn();
             }
-            catch(r){
-                promise.reject(r);
+            catch(reason){
+                promise.reject(reason);
             }
         }
         promise.resolve(val);

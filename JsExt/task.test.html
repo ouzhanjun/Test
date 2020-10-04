@@ -12,20 +12,21 @@
     <script src="promise.js"></script>
     <script src="task.js"></script>
     <script>
-        var p1 = new jsDom.Deferred();
+        var p1 = new jsDom.Task();
         p1.done(function(v){
             console.log(v);
         }).done(function(v){
             console.log(v);
         });
-        p1.work(function(){
+        p1.start(function(){
+            throw "ex";
             return "abc";
         });p1.done(function(v){
             console.log(v);
             return v*30;
         });
         p1.fail(function(r){
-            console.log(r);
+            console.log("exception:"+r);
         });
     </script>
 
