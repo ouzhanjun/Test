@@ -4,7 +4,7 @@ var jsDom = function (selector, context) {
 	return new jsDom.fn.init(selector, context);
 };
 
-jsDom.validate = {
+jsDom = {
 	isArrayLike: function (obj) {
 
 		var length = !!obj && obj.length;
@@ -37,17 +37,59 @@ jsDom.validate = {
 	},
 	isFunction: function (fn) {
 		return typeof fn === "function" && typeof fn.nodeType !== "number";
+	},
+	deepCopy: function (target, src) {
+		var srcValue, isCopyArray, targetProp;
+		if (typeof target !== "object" && typeof target !== "function") {
+			target = {};
+		}
+
+		if (src) {
+			for (name in src) {
+				isCopyArray = false;
+				srcValue = src[name];
+				targetProp = target[name];
+
+				// Prevent Object.prototype pollution & never-ending loop 保护prototype不被污染和不能结束的循环
+				if (name === "__proto__" || target === srcValue) {
+					continue;
+				}
+
+				if (jsDom.isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
+					if (isCopyArray && !isArray(targetProp)) {
+						targetProp = [];
+					} else if (!isCopyArray && !isPlainObject(targetProp)) {
+						targetProp = {};
+					}
+					target[name] = deepCopy(targetProp, srcValue);
+				}
+				else if (srcValue !== undefined) {
+					target[name] = srcValue;
+				}
+			}
+		}
+		return target;
+	},
+	extend: function () {
+		var length = arguments.length;
+		var target = this;
+
+		for (i in arguments) {
+			target = jsDom.deepCopy(target, arguments[i]);
+		}
+
+		return target;
 	}
 }
 
 var types = ["Boolean", "Number", "String", "Array", "Date", "RegExp", "Object", "Error", "Symbol"];
 for (var i in types) {
 	var typeName = types[i];
-	if (!jsDom.validate["is" + typeName]) {
-		jsDom.validate["is" + typeName] = function (obj) {
+	if (!jsDom["is" + typeName]) {
+		jsDom["is" + typeName] = function (obj) {
 			return toString.call(obj) === "[object " + arguments.callee.typeName + "]";
 		};
-		jsDom.validate["is" + typeName].typeName=typeName;
+		jsDom["is" + typeName].typeName = typeName;
 	}
 }
 
@@ -93,54 +135,9 @@ jsDom.prototype = {
 	getElem: function (i) {
 		var j = i < 0 ? this.length + i : i;
 		return this[j];
-	},
-	deepCopy: function (target, src) {
-		var srcValue, isCopyArray, targetProp;
-		if (typeof target !== "object" && typeof target !== "function") {
-			target = {};
-		}
-
-		if (src) {
-			for (name in src) {
-				isCopyArray = false;
-				srcValue = src[name];
-				targetProp = target[name];
-
-				// Prevent Object.prototype pollution & never-ending loop 保护prototype不被污染和不能结束的循环
-				if (name === "__proto__" || target === srcValue) {
-					continue;
-				}
-
-				if (jsDom.validate.isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
-					if (isCopyArray && !isArray(targetProp)) {
-						targetProp = [];
-					} else if (!isCopyArray && !isPlainObject(targetProp)) {
-						targetProp = {};
-					}
-					target[name] = deepCopy(targetProp, srcValue);
-				}
-				else if (srcValue !== undefined) {
-					target[name] = srcValue;
-				}
-			}
-		}
-		return target;
-	},
-	extend: function () {
-		var length = arguments.length;
-		var target = this;
-
-		for (i in arguments) {
-			target = jsDom.prototype.deepCopy(this, arguments[i]);
-		}
-
-		return target;
-	},
+	}
 };
 //#endregion
-
-jsDom.fn = jsDom.prototype;
-jsDom.extend = jsDom.fn.extend;
 
 //#region jsDom 扩展定义
 jsDom.extend({
@@ -171,7 +168,7 @@ jsDom.extend({
 		//如果是基本类型或者函数则可以直接赋值，如果是对象或数组则进行回归
 		var length, i = 0;
 
-		if (jsDom.validate.isArrayLike(obj)) {
+		if (jsDom.isArrayLike(obj)) {
 			length = obj.length;
 			for (; i < length; i++) {
 				if (callback.call(obj[i], i, obj[i]) === false) {

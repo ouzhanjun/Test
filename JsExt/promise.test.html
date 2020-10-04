@@ -11,14 +11,18 @@
     <script src="string.js"></script>
     <script src="promise.js"></script>
     <script>
-        var p1 = new jsDom.Promise(function () {
+        var p1 = new jsDom.Promise(function (resolve) {
             console.log("start 1");
+            resolve(5);
         });
-        p1.done(function () { console.log("done 1"); });
-        p1.catch(function (e) { console.log(e); });
-        p1.failed(function (e) { console.log(e); });
-        p1.finally(function (e) { console.log("finally 1"); });
-        p1.done(function () { console.log("done1 1"); });
+        p1.then(function(v){
+            console.log(v*10);
+            return v*10;
+        }).then(function(v){
+            console.log(v*10);
+            return v*10;
+        });
+        
     </script>
 
 </head>

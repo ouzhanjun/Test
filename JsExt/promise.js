@@ -38,9 +38,6 @@ jsDom.Promise = function (fn) {
     var isFunction = function (fn) {
         return typeof fn === "function" && typeof fn.nodeType !== "number";
     }
-    if (!isFunction(fn)) {
-        throw new Error('The parameter must be a function');
-    }
 
     var self = this;
 
@@ -62,7 +59,7 @@ jsDom.Promise = function (fn) {
         self.rejectedCallbacks.fire.call(this, val);
     }
 
-    var resolve = function (val) {
+    this.resolve = function (val) {
         window.setTimeout(function () {
             if (self.status === StatusCode.Pending) { //Pending 待定
                 self.status = StatusCode.fulfilled;   //fulfilled 已实现
@@ -82,7 +79,7 @@ jsDom.Promise = function (fn) {
         })
     }
 
-    var reject = function (val) {
+    this.reject = function (val) {
         window.setTimeout(function () {
             if (self.status === StatusCode.Pending) { //Pending 待定
                 self.status = StatusCode.rejected;    //rejected 已实现
@@ -92,9 +89,9 @@ jsDom.Promise = function (fn) {
     }
 
     try {
-        fn(resolve, reject);
+        isFunction(fn) && fn(this.resolve, this.reject);
     } catch (reason) {
-        reject(reason);
+        reject(this.reason);
     }
 
     //#region 忽略要处理的函数
@@ -179,14 +176,6 @@ jsDom.Promise = function (fn) {
         })
     }
 
-    this.spread = function (fn, onRejected) {
-        return this.then(
-            function (values) {
-                return fn.apply(null, values)
-            }
-        );
-    }
-
     this.delay = function (duration) {
         return this.then(function (value) {
             return new Promise(function (resolve, reject) {
@@ -234,18 +223,5 @@ jsDom.Promise.all = function (promises) {
                 })
             })(i)
         }
-    })
-}
-
-jsDom.Promise.resolve = function (value) {
-    var promise = new Promise(function (resolve, reject) {
-        resolvePromise(promise, value, resolve, reject)
-    })
-    return promise
-}
-
-jsDom.Promise.reject = function (reason) {
-    return new Promise(function (resolve, reject) {
-        reject(reason)
     })
 }

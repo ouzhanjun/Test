@@ -43,11 +43,11 @@ jsDom.callbacks = function (fnOptions) {
     }
     //#region 设置回调列表参数
     var options;
-    if (jsDom.validate.isString(fnOptions)) {
+    if (jsDom.isString(fnOptions)) {
         options = {};
         jsDom.createProps(options, fnOptions, true)
     }
-    else if (jsDom.validate.isNumber(fnOptions)) {
+    else if (jsDom.isNumber(fnOptions)) {
         options = {};
         for (var code in StatusCode) {
             options[code] = !!(fnOptions & StatusCode[code]);

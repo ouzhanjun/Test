@@ -1,4 +1,4 @@
-
+/*
 // A central reference to the root JsDom(document)
 var rootJsDom,
     init = jsDom.fn.init = function (selector, context, root) {
@@ -26,3 +26,4 @@ init.prototype = jsDom.fn;
 
 // Initialize central reference
 rootJsDom = jsDom(document);
+*/
