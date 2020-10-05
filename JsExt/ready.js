@@ -1,6 +1,10 @@
 
 jsDom.isReady = false;
 
+jsDom.ready(fn)=function(fn){
+    
+}
+
 function completed() {
     jsDom.isReady = true;
     document.removeEventListener("DOMContentLoaded", completed);

@@ -21,7 +21,8 @@
         p1.start(function(){
             throw "ex";
             return "abc";
-        });p1.done(function(v){
+        });
+        p1.done(function(v){
             console.log(v);
             return v*30;
         });
