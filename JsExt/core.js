@@ -142,11 +142,9 @@ jsDom.prototype = {
 
 //#region jsDom 扩展定义
 jsDom.extend({
-	//expando 可能是 expandable object 的缩写，表示可扩展的对象。
-	//expando property 表示可扩展对象的动态属性， 可以在运行时动态添加到对象中的属性 
-	expando: "jsDom" + ( version + Math.random() ).replace( /\D/g, "" ),
+	expando: "jsDom" + (this.version + Math.random()).toString().replace(/\D/g, ""),
 	isReady: false,
-	
+
 	error: function (msg) {
 		throw new Error(msg);
 	},
