@@ -6,7 +6,7 @@ jsDom.Event = {
 		Form: ["blur", "change", "focus", "focusin", "focusout", "input", "reset", "search", "select", "submit"],
 		Print: ["afterprint", "beforeprint"]
 	},
-	data: new jsDom.Data(),
+	dataCache: new jsDom.Data(),
 	acceptData: function (owner) {
 
 		// Accepts only:
@@ -50,13 +50,35 @@ jsDom.Event = {
 			target['on' + eventType] = fn;
 		}
 	},
-	add: function (elem, eventType, handler, data, selector) {
-		var elemData = data.get(elem);
-		var handleObj = Object.create(null);
-		var handlers, eventHandle;
+	dispatch: function (nativeEvent) {
+		var i, handleObj, handler, selector, data,
+			args = new Array(arguments.length);
+		var event = nativeEvent;
+		var handlers = (jsDom.Event.dataCache.get(this, "events") || Object.create(null))
+		[event.type] || [];
+
+		args[0] = event;
+
+		for (i = 1; i < arguments.length; i++) {
+			args[i] = arguments[i];
+		}
+
+		var j = 0;
+		while (handleObj = handlers[j++]) {
+			handler = handleObj.handler;
+			selector = handleObj.selector;
+			data = handleObj.data;
+			args[args.length] = data;
+			handler.apply(selector, args);
+		}
+	},
+	add: function (elem, eventType, handler, selector, data) {
+		var elemData = this.dataCache.get(elem);
+		var handleObj = Object.create(null),
+			handlers, eventHandle;
 
 		// Only attach events to objects that accept data
-		if (!acceptData(elem)) {
+		if (!this.acceptData(elem)) {
 			return;
 		}
 
@@ -77,8 +99,9 @@ jsDom.Event = {
 		if (!(eventHandle = elemData.handle)) {
 			eventHandle = elemData.handle = function (e) {
 				return typeof jsDom !== "undefined"
-					&& jQuery.event.dispatch.apply(elem, arguments);
+					&& jsDom.Event.dispatch.apply(elem, arguments);
 			};
+			this.bind(elem, eventType, eventHandle, false);
 		}
 
 		if (selector) {
@@ -92,27 +115,31 @@ jsDom.Event = {
 			handlers.push(handleObj);
 		}
 	},
-	dispatch: function (elem, nativeEvent) {
-		var i, handleObj, handler, selector, data,
-			args = new Array(arguments.length);
-		var event = nativeEvent;
-		var handlers = (this.data.get(elem, "events") || Object.create(null))
-		[event.type] || [];
+	remove: function (elem, eventType, handler, selector) {
+		var handlers, j, handleObj,
+			elemData = this.dataCache.get(elem);
 
-		args[0] = event;
-
-		for (i = 2; i < arguments.length; i++) {
-			args[i - 1] = arguments[i];
+		if (!elemData || !(events = elemData.events)) {
+			return;
 		}
 
-		event.triggerTarget = elem;
-		
-		var j = 0;
-		while (handleObj = handlers[j++]) {
-			handler = handleObj.handler;
-			selector = handleObj.selector;
-			data = handleObj.data;
-			handler.apply(selector, args);
+		handlers = events[eventType] || [];
+		for (var i = 0; i < handlers.length; i++) {
+			handleObj = handlers[i];
+			if ((!handler || handleObj.guid === handler.guid) &&
+				(!selector || handleObj.selector === selector && handleObj.selector)) {
+				handlers.splice(i, 1);
+				break;
+			}
+		}
+
+		if (handlers.length === 0) {
+			jsDom.event.unbind(elem, eventType, elemData.handle);
+			delete elemData.events[eventType];
+		}
+
+		if (jsDom.isEmptyObject(events)) {
+			jsDom.event.dataCache.remove(elem, "events");
 		}
 	}
 }

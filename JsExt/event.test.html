@@ -26,10 +26,13 @@
 </body>
 <script>
     var elem = document.getElementById("demo");
+    /*
     jsDom.Event.bind(elem, "click", function (event) {
         console.log(event);
     }, true, true, true);
-
+    */
+    var f = { a: "abc", f: function (e, data) { console.log(e); console.log(data); } };
+    jsDom.Event.add(elem, "click", f.f, f, "ABC");
 </script>
 
 </html>
