@@ -17,7 +17,7 @@ jsDom.Event = {
 		//    - Any
 		return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
 	},
-	unbind: function (target, eventType, fn) {
+	off: function (target, eventType, fn) {
 		if (typeof eventType !== "string") {
 			return;
 		}
@@ -30,11 +30,11 @@ jsDom.Event = {
 			target['on' + eventType] = null;
 		}
 	},
-	bind: function (target, eventType, fn, once) {
+	on: function (target, eventType, fn, once) {
 		var orignFn = fn;
 		if (once) {
 			fn = function (event) {
-				jsDom.Event.unbind(target, eventType, fn);
+				jsDom.Event.off(target, eventType, fn);
 				return orignFn.apply(this, arguments);
 			};
 		}
@@ -72,7 +72,7 @@ jsDom.Event = {
 			handler.apply(selector, args);
 		}
 	},
-	add: function (elem, eventType, handler, selector, data) {
+	add: function (elem, eventType, handler, selector, data, once) {
 		var elemData = this.dataCache.get(elem);
 		var handleObj = Object.create(null),
 			handlers, eventHandle;
@@ -98,22 +98,21 @@ jsDom.Event = {
 
 		if (!(eventHandle = elemData.handle)) {
 			eventHandle = elemData.handle = function (e) {
-				return typeof jsDom !== "undefined"
+				typeof jsDom !== "undefined"
 					&& jsDom.Event.dispatch.apply(elem, arguments);
+				once && jsDom.Event.remove(elem, eventType, handler, selector);
 			};
-			this.bind(elem, eventType, eventHandle, false);
+			this.on(elem, eventType, eventHandle, false);
 		}
+		//selector 可以为null
+		handleObj = {
+			handler: handler,
+			selector: selector,
+			data: data,
+			guid: handler.guid
+		};
 
-		if (selector) {
-			handleObj = {
-				handler: handler,
-				selector: selector,
-				data: data,
-				guid: handler.guid
-			};
-
-			handlers.push(handleObj);
-		}
+		handlers.push(handleObj);
 	},
 	remove: function (elem, eventType, handler, selector) {
 		var handlers, j, handleObj,
@@ -134,12 +133,18 @@ jsDom.Event = {
 		}
 
 		if (handlers.length === 0) {
-			jsDom.event.unbind(elem, eventType, elemData.handle);
+			this.off(elem, eventType, elemData.handle);
 			delete elemData.events[eventType];
 		}
 
 		if (jsDom.isEmptyObject(events)) {
-			jsDom.event.dataCache.remove(elem, "events");
+			this.dataCache.remove(elem, "events");
 		}
+	},
+	bind: function (target, eventType, handler, data, once) {
+		this.add(target, eventType, handler, null, data, once);
+	},
+	unbind: function (target, eventType, handler) {
+		this.remove(target, eventType, handler, null);
 	}
 }

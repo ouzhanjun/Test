@@ -5,7 +5,7 @@ var jsDom = function (selector, context) {
 };
 
 jsDom = {
-	Guid: 1,
+	guid: 1,
 	isArrayLike: function (obj) {
 
 		var length = !!obj && obj.length;
