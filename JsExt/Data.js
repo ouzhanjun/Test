@@ -39,6 +39,15 @@ jsDom.Data.prototype = {
             this.cache(owner) :
             owner[this.expando] && owner[this.expando][key];
     },
+    access: function (owner, key, value) {
+        if (key === undefined ||
+            ((key && typeof key === "string") && value === undefined)) {
+
+            return this.get(owner, key);
+        }
+        this.set(owner, key, value);
+        return this;
+    },
     remove: function (owner, key) {
         var cache = owner[this.expando];
 

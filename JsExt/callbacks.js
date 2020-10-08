@@ -1,64 +1,38 @@
 /*
- * Create a callback list using the following parameters:
- *
- *	options: an optional list of space-separated options that will change how
- *			the callback list behaves or a more traditional option object
- *
- * By default a callback list will act like an event callback list and can be
- * "fired" multiple times.
- *
- * Possible options:
- *
- *	once:			will ensure the callback list can only be fired once (like a Deferred)
- *
- *	memory:			will keep track of previous values and will call any callback added
- *					after the list has been fired right away with the latest "memorized"
- *					values (like a Deferred)
- *
- *	unique:			will ensure a callback can only be added once (no duplicate in the list)
- *
- *	stopOnFalse:	interrupt callings when a callback returns false
- *  
- */
-/*
 功能描述：
-1.  保存要执行的回调函数，并且可以通过fire重复执行回调函数列表；
 2.  设置一个标志位，memory 控制是否对新添加进来的回调函数也能对前值参数执行操作，也就是延迟回调；
 3.  设置一个标志位，once 控制每个回调函数只能被调用一次，调用完成后立即清理回调函数列表；
 4.  设置一个标志位，unique 控制回掉函数列表不能添加存在的回调函数；
 5.  设置一个标志位，stopOnFalse 控制如果回调函数返回false则后续终止执行；
-6.  Lock 方法调用后，locked标志位=true, 
-    a. 不能再调用fire去执行回掉函数;
-    b. 回调函数列表被清空；
-    c. memory=true时，如果memory存在数据可以添加新的回调函数，并立即被调用；
-7. disable 将禁用所有功能；
 */
 
-jsDom.callbacks = function (fnOptions) {
+jsDom.callbacks = function (options) {
     var StatusCode = {
         memory: 1,
         once: 2,
         unique: 4,
         stopOnFalse: 8
     }
+
     //#region 设置回调列表参数
     var options;
-    if (jsDom.isString(fnOptions)) {
+
+    if (jsDom.isString(options)) {
         options = {};
-        jsDom.createProps(options, fnOptions, true)
+        jsDom.createProps(options, options, true);
     }
-    else if (jsDom.isNumber(fnOptions)) {
+    else if (jsDom.isNumber(options)) {
         options = {};
         for (var code in StatusCode) {
-            options[code] = !!(fnOptions & StatusCode[code]);
+            options[code] = !!(options & StatusCode[code]);
         }
     }
     else {
-        options = fnOptions || {};
+        options = options || {};
     }
     //#endregion
 
-    // Flag to know if list is currently firing
+    // 是否执行当中的标记
     var firing,
         // 标志位，前值，例如使用异步处理时，异步需要记忆以便符合条件后再执行，此时前值作为回调函数的参数
         memory,
@@ -66,8 +40,7 @@ jsDom.callbacks = function (fnOptions) {
 
         fire = function (args, caller) {
             var callback, lastResult;
-            // Execute callbacks for all pending executions,
-            // respecting firingIndex overrides and runtime changes
+            // 为所有未决的执行执行回调，尊重firingIndex覆盖和运行时更改
             firing = true;
 
             //执行所有回调函数
@@ -121,9 +94,7 @@ jsDom.callbacks = function (fnOptions) {
                 return this;
             },
             indexOf: function (callback) {
-                var ret = -1;
-                ret = list.indexOf(callback);
-                return ret;
+                return list.indexOf(callback);
             },
             has: function (callback) {
                 var ret = false;
@@ -135,14 +106,13 @@ jsDom.callbacks = function (fnOptions) {
                 }
                 return ret;
             },
-            // Remove all callbacks from the list
+            // 清空所有回调方法
             empty: function () {
                 if (list) {
                     list = [];
                 }
                 return this;
             },
-            //外部调用fire,如果加锁，则不执行回调，否则所有回调函数都执行
             fire: function () {
                 var ret = fire(arguments, this);
                 return ret;
