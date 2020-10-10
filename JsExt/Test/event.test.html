@@ -7,6 +7,7 @@
 
     <script src="core.js"></script>
     <script src="init.js"></script>
+    <script src="data.js"></script>
     <script src="event.js"></script>
 </head>
 
@@ -24,11 +25,15 @@
     </ul>
 </body>
 <script>
-    var elem=document.getElementById("demo");
-    jsDom.Event.bind(elem,"click",function(event){
+    var elem = document.getElementById("demo");
+    /*
+    jsDom.Event.bind(elem, "click", function (event) {
         console.log(event);
-    },true,true,true);
-    
+    }, true, true, true);
+    */
+    var f = { a: "abc", f: function (e, data) { console.log(e); console.log(data); } };
+    //jsDom.Event.add(elem, "click", f.f, f, "ABC");
+    jsDom.Event.bind(elem,"click", f.f,"ABCD",true);
 </script>
 
 </html>

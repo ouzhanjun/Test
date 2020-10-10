@@ -4,14 +4,82 @@ var jsDom = function (selector, context) {
 	return new jsDom.fn.init(selector, context);
 };
 
-jsDom = {
+//#region jsDom 对象定义
+jsDom.fn = jsDom.prototype = {
+	version: "jsDom 1.0.0",
+	constructor: jsDom,
+	length: 0,
+
+	toArray: function () {
+		return Array.prototype.slice.call(this);
+	},
+	get: function (index) {
+		if (!index && index !== 0) {
+			return Array.prototype.slice.call(this);
+		}
+		return index < 0 ? this[index + this.length] : this[index];
+	},
+	pushStack: function (elems) {
+		var ret = jsDom.merge(this.constructor(), elems);
+		ret["prevObject"] = this;
+		return ret;
+	},
+	each: function (callback) {
+		return jsDom.each(this, callback);
+	},
+	map: function (callback) {
+		var arr = this.toArray();
+		var elems = arr.map(callback);
+		return this.pushStack(elems);
+	},
+	slice: function () {
+		return this.pushStack(Array.slice.apply(this.arguments));
+	},
+	first: function () {
+		return this.eq(0);
+	},
+	last: function () {
+		return this.eq(-1);
+	},
+	even: function () {
+		return this.pushStack(jsDom.grep(this, function (_elem, i) {
+			return (i + 1) % 2;
+		}));
+	},
+	odd: function () {
+		return this.pushStack(jsDom.grep(this, function (_elem, i) {
+			return i % 2;
+		}));
+	},
+	eq: function (i) {
+		var len = this.length,
+			j = +i + (i < 0 ? len : 0);//+i 字符串格式的i转换成数值类型
+		return this.pushStack(j >= 0 && j < len ? [this[j]] : [])
+	},
+	extend: function () {
+		var length = arguments.length;
+		var target = this;
+
+		for (i in arguments) {
+			target = jsDom.deepCopy(target, arguments[i]);
+		}
+
+		return target;
+	}
+};
+//#endregion
+
+jsDom.extend=jsDom.fn.extend;
+jsDom.extend( {
 	guid: 1,
+
 	isArrayLike: function (obj) {
 
 		var length = !!obj && obj.length;
 
 		return Array.isArray(obj) || typeof length === "number" && length > 0 && (length - 1) in obj;
 	},
+
 	isPlainObject: function (obj) {
 		var proto, Ctor;
 
@@ -28,6 +96,7 @@ jsDom = {
 		Ctor = proto.hasOwnProperty("constructor") && proto.constructor;
 		return typeof Ctor === "function" && Ctor.toString() === Object.toString();
 	},
+
 	isEmptyObject: function (obj) {
 		var name;
 
@@ -36,9 +105,11 @@ jsDom = {
 		}
 		return true;
 	},
+
 	isFunction: function (fn) {
 		return typeof fn === "function" && typeof fn.nodeType !== "number";
 	},
+
 	deepCopy: function (target, src) {
 		var srcValue, isCopyArray, targetProp;
 		if (typeof target !== "object" && typeof target !== "function") {
@@ -56,7 +127,7 @@ jsDom = {
 					continue;
 				}
 
-				if (jsDom.isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
+				if (jsDom.isPlainObject(srcValue) || (isCopyArray = jsDom.isArray(srcValue))) {
 					if (isCopyArray && !isArray(targetProp)) {
 						targetProp = [];
 					} else if (!isCopyArray && !isPlainObject(targetProp)) {
@@ -71,101 +142,31 @@ jsDom = {
 		}
 		return target;
 	},
-	extend: function () {
-		var length = arguments.length;
-		var target = this;
 
-		for (i in arguments) {
-			target = jsDom.deepCopy(target, arguments[i]);
+	merge: function (first, second) {
+		var len = +second.length,
+			firstLen = first.length,
+			i = 0;
+
+		for (; i < len; i++) {
+			first[firstLen++] = second[i];
 		}
+		first.length = firstLen;
+	},
 
-		return target;
-	}
-}
+	grep: function (elems, callback, callbackExpect) {
+		var matches = [];
+		var length = elems.length;
 
-var types = ["Boolean", "Number", "String", "Array", "Date", "RegExp", "Object", "Error", "Symbol"];
-for (var i in types) {
-	var typeName = types[i];
-	if (!jsDom["is" + typeName]) {
-		jsDom["is" + typeName] = function (obj) {
-			return toString.call(obj) === "[object " + arguments.callee.typeName + "]";
-		};
-		jsDom["is" + typeName].typeName = typeName;
-	}
-}
-
-//#region jsDom 对象 定义
-jsDom.prototype = {
-	version: "jsDom 1.0.0",
-	constructor: jsDom,
-	AddElems: function (elems) {
-		var ret = jsDom.AddElemsToTarget(this.constructor(), elems);
-		ret["prevObject"] = this;
-		return ret;
-	},
-	toArray: function () {
-		return Array.prototype.slice.call(this);
-	},
-	each: function (callback) {
-		jsDom.each(this, callback);
-	},
-	eq: function (i) {
-		var j = i < 0 ? this.length + i : i;
-		return this.AddElems((j < this.length && j >= 0) ? [this[j]] : []);
-	},
-	odd: function () {
-		return this.AddElems(jsDom.where(this, function (elem, i) {
-			return i % 2 == 0;
-		}));
-	},
-	even: function () {
-		return this.AddElems(jsDom.where(this, function (elem, i) {
-			return i % 2 != 0;
-		}));
-	},
-	first: function () {
-		if (this.length > 0) {
-			return this.eq(0);
-		}
-	},
-	last: function () {
-		if (this.length > 0) {
-			return this.eq(this.length - 1);
-		}
-	},
-	getElem: function (i) {
-		var j = i < 0 ? this.length + i : i;
-		return this[j];
-	}
-};
-//#endregion
-
-//#region jsDom 扩展定义
-jsDom.extend({
-	expando: "jsDom" + (this.version + Math.random()).toString().replace(/\D/g, ""),
-	isReady: false,
-
-	error: function (msg) {
-		throw new Error(msg);
-	},
-	AddElemsToTarget: function (target, elems) {
-		if (!target) {
-			if (Array.isArray(elems)) {
-				target = [];
-			}
-			else {
-				target = {};
+		for (var i = 0; i < length; i++) {
+			if (callback(elems[i], i) === callbackExpect) {
+				matches.push(elems[i]);
 			}
 		}
-		var len = +elems.length, j = 0, i = 0;
 
-		for (; j < len; j++) {
-			target[i++] = elems[j];
-		}
-
-		target.length = i;
-		return target;
+		return matches;
 	},
+
 	each: function (obj, callback) {
 		//如果是基本类型或者函数则可以直接赋值，如果是对象或数组则进行回归
 		var length, i = 0;
@@ -186,20 +187,27 @@ jsDom.extend({
 		}
 
 		return obj;
-	},
-	where: function (elems, callback, expVal) {	//根据回调函数返回是否true,过滤元素
-		var matches = [],
-			i = 0,
-			expVal = expVal || true,
-			length = elems.length;
+	}
+});
 
-		for (; i < length; i++) {
-			if (callback(i, elems[i]) === expVal) {
-				matches.push(elems[i]);
-			}
-		}
+var types = ["Boolean", "Number", "String", "Array", "Date", "RegExp", "Object", "Error", "Symbol"];
+for (var i in types) {
+	var typeName = types[i];
+	if (!jsDom["is" + typeName]) {
+		jsDom["is" + typeName] = function (obj) {
+			return toString.call(obj) === "[object " + arguments.callee.typeName + "]";
+		};
+		jsDom["is" + typeName].typeName = typeName;
+	}
+}
 
-		return matches;
+//#region jsDom 扩展定义
+jsDom.extend({
+	expando: "jsDom" + (this.version + Math.random()).toString().replace(/\D/g, ""),
+	isReady: false,
+
+	error: function (msg) {
+		throw new Error(msg);
 	},
 	// Convert String-formatted props into Object-formatted ones
 	createProps: function (target, props, defValue) {

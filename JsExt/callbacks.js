@@ -6,7 +6,7 @@
 5.  设置一个标志位，stopOnFalse 控制如果回调函数返回false则后续终止执行；
 */
 
-jsDom.callbacks = function (options) {
+jsDom.callbacks = function (fnOptions) {
     var StatusCode = {
         memory: 1,
         once: 2,
@@ -17,14 +17,14 @@ jsDom.callbacks = function (options) {
     //#region 设置回调列表参数
     var options;
 
-    if (jsDom.isString(options)) {
+    if (jsDom.isString(fnOptions)) {
         options = {};
-        jsDom.createProps(options, options, true);
+        jsDom.createProps(options, fnOptions, true);
     }
-    else if (jsDom.isNumber(options)) {
+    else if (jsDom.isNumber(fnOptions)) {
         options = {};
         for (var code in StatusCode) {
-            options[code] = !!(options & StatusCode[code]);
+            options[code] = !!(fnOptions & StatusCode[code]);
         }
     }
     else {
