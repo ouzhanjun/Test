@@ -16,13 +16,12 @@
 <button type="button" >点击这里</button>
 <p>锚部分为 #part5</p>
 <button onclick="myFunction()">点我</button>
-<p id="$demo" class="cls1 cls2">demo</p>
+<p id="demo" class="cls1 cls2">demo</p>
 <ul class="cls1 cls2 cls3"><li>aa</li><li>bb</li><li>cc</li>
     </ul>
 </body>
 <script>
-	var demo=document.getElementById("#demo");
-	demo.appendChild(jsDom.element.createNode("<div>abc</div>"));
+	var demo=jsDom("#demo");
 	
 	</script>
 	

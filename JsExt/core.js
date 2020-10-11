@@ -3,6 +3,42 @@
 var jsDom = function (selector, context) {
 	return new jsDom.fn.init(selector, context);
 };
+jsDom.isArrayLike = function (obj) {
+
+	var length = !!obj && obj.length;
+
+	return Array.isArray(obj) || typeof length === "number" && length > 0 && (length - 1) in obj;
+}
+
+jsDom.isPlainObject = function (obj) {
+	var proto, Ctor;
+
+	if (!obj || toString.call(obj) !== "[object Object]") {
+		return false;
+	}
+
+	proto = Object.getPrototypeOf(obj);
+
+	if (!proto) {
+		return true;
+	}
+
+	Ctor = proto.hasOwnProperty("constructor") && proto.constructor;
+	return typeof Ctor === "function" && Ctor.toString() === Object.toString();
+}
+
+jsDom.isEmptyObject = function (obj) {
+	var name;
+
+	for (name in obj) {
+		return false;
+	}
+	return true;
+}
+
+jsDom.isFunction = function (fn) {
+	return typeof fn === "function" && typeof fn.nodeType !== "number";
+}
 
 //#region jsDom 对象定义
 jsDom.fn = jsDom.prototype = {
@@ -23,6 +59,15 @@ jsDom.fn = jsDom.prototype = {
 		var ret = jsDom.merge(this.constructor(), elems);
 		ret["prevObject"] = this;
 		return ret;
+	},
+	push: function (elems) {
+		if (Array.isArray(elems)) {
+			jsDom.merge(this, elems);
+		}
+		else {
+			jsDom.merge(this, [elems]);
+		}
+		return this;
 	},
 	each: function (callback) {
 		return jsDom.each(this, callback);
@@ -55,93 +100,46 @@ jsDom.fn = jsDom.prototype = {
 		var len = this.length,
 			j = +i + (i < 0 ? len : 0);//+i 字符串格式的i转换成数值类型
 		return this.pushStack(j >= 0 && j < len ? [this[j]] : [])
-	},
-	extend: function () {
-		var length = arguments.length;
-		var target = this;
-
-		for (i in arguments) {
-			target = jsDom.deepCopy(target, arguments[i]);
-		}
-
-		return target;
 	}
+
 };
 //#endregion
 
-jsDom.extend=jsDom.fn.extend;
-jsDom.extend( {
-	guid: 1,
+jsDom.extend = jsDom.fn.extend = function (target, src) {
+	var srcValue, isCopyArray, targetProp;
+	if (typeof target !== "object" && typeof target !== "function") {
+		target = {};
+	}
 
-	isArrayLike: function (obj) {
+	if (src) {
+		for (name in src) {
+			isCopyArray = false;
+			srcValue = src[name];
+			targetProp = target[name];
 
-		var length = !!obj && obj.length;
+			// Prevent Object.prototype pollution & never-ending loop 保护prototype不被污染和不能结束的循环
+			if (name === "__proto__" || target === srcValue) {
+				continue;
+			}
 
-		return Array.isArray(obj) || typeof length === "number" && length > 0 && (length - 1) in obj;
-	},
-
-	isPlainObject: function (obj) {
-		var proto, Ctor;
-
-		if (!obj || toString.call(obj) !== "[object Object]") {
-			return false;
-		}
-
-		proto = Object.getPrototypeOf(obj);
-
-		if (!proto) {
-			return true;
-		}
-
-		Ctor = proto.hasOwnProperty("constructor") && proto.constructor;
-		return typeof Ctor === "function" && Ctor.toString() === Object.toString();
-	},
-
-	isEmptyObject: function (obj) {
-		var name;
-
-		for (name in obj) {
-			return false;
-		}
-		return true;
-	},
-
-	isFunction: function (fn) {
-		return typeof fn === "function" && typeof fn.nodeType !== "number";
-	},
-
-	deepCopy: function (target, src) {
-		var srcValue, isCopyArray, targetProp;
-		if (typeof target !== "object" && typeof target !== "function") {
-			target = {};
-		}
-
-		if (src) {
-			for (name in src) {
-				isCopyArray = false;
-				srcValue = src[name];
-				targetProp = target[name];
-
-				// Prevent Object.prototype pollution & never-ending loop 保护prototype不被污染和不能结束的循环
-				if (name === "__proto__" || target === srcValue) {
-					continue;
+			if (jsDom.isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
+				if (isCopyArray && !Array.isArray(targetProp)) {
+					targetProp = [];
+				} else if (!isCopyArray && !jsDom.isPlainObject(targetProp)) {
+					targetProp = {};
 				}
-
-				if (jsDom.isPlainObject(srcValue) || (isCopyArray = jsDom.isArray(srcValue))) {
-					if (isCopyArray && !isArray(targetProp)) {
-						targetProp = [];
-					} else if (!isCopyArray && !isPlainObject(targetProp)) {
-						targetProp = {};
-					}
-					target[name] = deepCopy(targetProp, srcValue);
-				}
-				else if (srcValue !== undefined) {
-					target[name] = srcValue;
-				}
+				target[name] = extend(targetProp, srcValue);
+			}
+			else if (srcValue !== undefined) {
+				target[name] = srcValue;
 			}
 		}
-		return target;
-	},
+	}
+	return target;
+}
+
+jsDom.extend(jsDom, {
+	guid: 1,
 
 	merge: function (first, second) {
 		var len = +second.length,
@@ -187,19 +185,40 @@ jsDom.extend( {
 		}
 
 		return obj;
+	},
+	deepCopy: function (target, src) {
+		var srcValue, isCopyArray, targetProp;
+		if (typeof target !== "object" && typeof target !== "function") {
+			target = {};
+		}
+
+		if (src) {
+			for (name in src) {
+				isCopyArray = false;
+				srcValue = src[name];
+				targetProp = target[name];
+
+				// Prevent Object.prototype pollution & never-ending loop 保护prototype不被污染和不能结束的循环
+				if (name === "__proto__" || target === srcValue) {
+					continue;
+				}
+
+				if (jsDom.isPlainObject(srcValue) || (isCopyArray = jsDom.isArray(srcValue))) {
+					if (isCopyArray && !isArray(targetProp)) {
+						targetProp = [];
+					} else if (!isCopyArray && !jsDom.isPlainObject(targetProp)) {
+						targetProp = {};
+					}
+					target[name] = deepCopy(targetProp, srcValue);
+				}
+				else if (srcValue !== undefined) {
+					target[name] = srcValue;
+				}
+			}
+		}
+		return target;
 	}
 });
-
-var types = ["Boolean", "Number", "String", "Array", "Date", "RegExp", "Object", "Error", "Symbol"];
-for (var i in types) {
-	var typeName = types[i];
-	if (!jsDom["is" + typeName]) {
-		jsDom["is" + typeName] = function (obj) {
-			return toString.call(obj) === "[object " + arguments.callee.typeName + "]";
-		};
-		jsDom["is" + typeName].typeName = typeName;
-	}
-}
 
 //#region jsDom 扩展定义
 jsDom.extend({
@@ -218,4 +237,16 @@ jsDom.extend({
 		return target;
 	}
 });
+
+var types = ["Boolean", "Number", "String", "Array", "Date", "RegExp", "Object", "Error", "Symbol"];
+for (var i in types) {
+	var typeName = types[i];
+	if (!jsDom["is" + typeName]) {
+		jsDom["is" + typeName] = function (obj) {
+			return toString.call(obj) === "[object " + arguments.callee.typeName + "]";
+		};
+		jsDom["is" + typeName].typeName = typeName;
+	}
+}
+
 //#endregion
