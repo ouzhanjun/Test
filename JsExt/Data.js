@@ -5,11 +5,12 @@ jsDom.Data = function () {
 }
 
 jsDom.Data.uid = 1;
-
 jsDom.Data.prototype = {
+    dataType: {
+        events: "events"
+    },
     cache: function (owner) {
         var value = owner[this.expando];
-
         if (!value) {
             value = Object.create(null);
             Object.defineProperty(owner, this.expando, {
@@ -68,5 +69,39 @@ jsDom.Data.prototype = {
     hasData: function (owner) {
         var cache = owner[this.expando];
         return cache !== undefined && !jQuery.isEmptyObject(cache);
+    },
+    addEventHandle: function (owner, eventType, eventHandleObj, data) {
+        var handlers,
+            events = this.get(owner, this.dataType.events);
+        if (!events) {
+            var cache = this.cache(owner);
+            events = cache.events = Object.create(null);
+        }
+
+        if (!events[eventType]) {
+            events[eventType] = Object.create(Array.prototype);
+        }
+
+        handlers = events[eventType];
+        handlers.push(eventHandleObj);
+    },
+    hasEventHandle:function(owner,eventType,eventhandleObj){
+        var handlers,i=0,
+            events = this.get(owner, this.dataType.events);
+        if (!events) {
+            var cache = this.cache(owner);
+            events = cache.events = Object.create(null);
+        }
+
+        if (!events[eventType]) {
+            events[eventType] = Object.create(Array.prototype);
+        }
+        handlers = events[eventType];
+        for(;i<handlers.length;i++){
+            if(eventhandleObj.guid==handlers[i].guid){
+                return true;
+            }
+        }
+        return false;
     }
 }

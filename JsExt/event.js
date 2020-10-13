@@ -1,3 +1,44 @@
+function EventHandler(handler, selector, data, guid) {
+	this.handler = handler;
+	this.selector = selector;
+	this.data = data;
+	this.guid = handler.guid;
+	this.execute = function (event) {
+		var args = new Array(arguments.length);
+		args[0]=event;
+		args[args.length] = this.data;
+		this.handler.apply(this.selector, args);
+	}
+}
+
+function addEvent(target, eventType, fn){
+	if (typeof eventType !== "string") {
+		return;
+	}
+	eventType = eventType.toLowerCase();
+	if (target.addEventListener) {
+		target.addEventListener(eventType, fn);
+	} else if (target.attachEvent) {
+		target.attachEvent('on' + eventType, fn);
+	} else {
+		target['on' + eventType] = fn;
+	}
+}
+
+function removeEvent(target, eventType, fn) {
+	if (typeof eventType !== "string") {
+		return;
+	}
+	eventType = eventType.toLowerCase();
+	if (target.removeEventListener) {
+		target.removeEventListener(eventType, fn);
+	} else if (target.detachEvent) {
+		target.detachEvent('on' + eventType, fn);
+	} else {
+		target['on' + eventType] = null;
+	}
+}
+
 jsDom.Event = {
 	Types: {
 		Mouse: ["click", "contextmenu", "dblclick", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "onwheel"],
