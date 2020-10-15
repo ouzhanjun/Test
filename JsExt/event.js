@@ -1,17 +1,6 @@
-function EventHandler(handler, selector, data, guid) {
-	this.handler = handler;
-	this.selector = selector;
-	this.data = data;
-	this.guid = handler.guid;
-	this.execute = function (event) {
-		var args = new Array(arguments.length);
-		args[0]=event;
-		args[args.length] = this.data;
-		this.handler.apply(this.selector, args);
-	}
-}
 
-function addEvent(target, eventType, fn){
+
+function addEvent(target, eventType, fn) {
 	if (typeof eventType !== "string") {
 		return;
 	}
@@ -58,39 +47,6 @@ jsDom.Event = {
 		//    - Any
 		return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
 	},
-	off: function (target, eventType, fn) {
-		if (typeof eventType !== "string") {
-			return;
-		}
-		eventType = eventType.toLowerCase();
-		if (target.removeEventListener) {
-			target.removeEventListener(eventType, fn);
-		} else if (target.detachEvent) {
-			target.detachEvent('on' + eventType, fn);
-		} else {
-			target['on' + eventType] = null;
-		}
-	},
-	on: function (target, eventType, fn, once) {
-		var orignFn = fn;
-		if (once) {
-			fn = function (event) {
-				jsDom.Event.off(target, eventType, fn);
-				return orignFn.apply(this, arguments);
-			};
-		}
-		if (typeof eventType !== "string") {
-			return;
-		}
-		eventType = eventType.toLowerCase();
-		if (target.addEventListener) {
-			target.addEventListener(eventType, fn);
-		} else if (target.attachEvent) {
-			target.attachEvent('on' + eventType, fn);
-		} else {
-			target['on' + eventType] = fn;
-		}
-	},
 	dispatch: function (nativeEvent) {
 		var i, handleObj, handler, selector, data,
 			args = new Array(arguments.length);
@@ -115,7 +71,7 @@ jsDom.Event = {
 	},
 	add: function (elem, eventType, handler, selector, data, once) {
 		var elemData = this.dataCache.get(elem);
-		var handleObj = Object.create(null),
+		var handleObj,
 			handlers, eventHandle;
 
 		// Only attach events to objects that accept data
@@ -146,12 +102,7 @@ jsDom.Event = {
 			this.on(elem, eventType, eventHandle, false);
 		}
 		//selector 可以为null
-		handleObj = {
-			handler: handler,
-			selector: selector,
-			data: data,
-			guid: handler.guid
-		};
+		handleObj = new EventHandler(handler, selector, data, handler.guid);
 
 		handlers.push(handleObj);
 	},

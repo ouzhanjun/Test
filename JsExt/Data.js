@@ -5,10 +5,12 @@ jsDom.Data = function () {
 }
 
 jsDom.Data.uid = 1;
+jsDom.Data.dataType = {
+    Event: "Event"
+};
+
 jsDom.Data.prototype = {
-    dataType: {
-        events: "events"
-    },
+
     cache: function (owner) {
         var value = owner[this.expando];
         if (!value) {
@@ -69,39 +71,63 @@ jsDom.Data.prototype = {
     hasData: function (owner) {
         var cache = owner[this.expando];
         return cache !== undefined && !jQuery.isEmptyObject(cache);
-    },
-    addEventHandle: function (owner, eventType, eventHandleObj, data) {
-        var handlers,
-            events = this.get(owner, this.dataType.events);
-        if (!events) {
-            var cache = this.cache(owner);
-            events = cache.events = Object.create(null);
-        }
+    }
+}
 
-        if (!events[eventType]) {
-            events[eventType] = Object.create(Array.prototype);
-        }
+function DataDictionary() {
+};
+DataDictionary.prototype =new jsDom.Data();
+DataDictionary.prototype.getEvent = function (owner) {
+    return this.get(owner, jsDom.Data.dataType.Event);
+}
 
-        handlers = events[eventType];
-        handlers.push(eventHandleObj);
-    },
-    hasEventHandle:function(owner,eventType,eventhandleObj){
-        var handlers,i=0,
-            events = this.get(owner, this.dataType.events);
-        if (!events) {
-            var cache = this.cache(owner);
-            events = cache.events = Object.create(null);
-        }
+DataDictionary.prototype.setEventHandler = function (owner, eventType, handler) {
+    var handlers,
+        events = this.get(owner, jsDom.Data.dataType.Event);
+    if (!events) {
+        var cache = this.cache(owner);
+        events = cache.events = Object.create(null);
+    }
 
-        if (!events[eventType]) {
-            events[eventType] = Object.create(Array.prototype);
+    if (!events[eventType]) {
+        events[eventType] = Object.create(Array.prototype);
+    }
+
+    handlers = events[eventType];
+    handlers.push(handler);
+}
+
+DataDictionary.prototype.hasEventHandler = function (owner, eventType, handler) {
+    var handlers, i = 0,
+        events = this.get(owner, this.dataType.events);
+    if (!events) {
+        var cache = this.cache(owner);
+        events = cache.events = Object.create(null);
+    }
+
+    if (!events[eventType]) {
+        events[eventType] = Object.create(Array.prototype);
+    }
+    handlers = events[eventType];
+    for (; i < handlers.length; i++) {
+        if (handler.guid == handlers[i].guid) {
+            return true;
         }
-        handlers = events[eventType];
-        for(;i<handlers.length;i++){
-            if(eventhandleObj.guid==handlers[i].guid){
-                return true;
-            }
+    }
+    return false;
+}
+
+DataDictionary.prototype.removeEventHandler = function (owner, eventType, handler) {
+    var handlers, i = 0,
+        events = this.get(owner, this.dataType.events);
+    if (!events || !events[eventType]) {
+        return;
+    }
+
+    handlers = events[eventType];
+    for (; i < handlers.length; i++) {
+        if (handler.guid == handlers[i].guid) {
+            handlers.splice(i, 1);
         }
-        return false;
     }
 }

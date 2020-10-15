@@ -221,7 +221,7 @@ jsDom.extend(jsDom, {
 });
 
 //#region jsDom 扩展定义
-jsDom.extend({
+jsDom.extend(jsDom, {
 	expando: "jsDom" + (this.version + Math.random()).toString().replace(/\D/g, ""),
 	isReady: false,
 
