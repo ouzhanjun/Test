@@ -11,34 +11,6 @@ function EventHandler(handler, selector, data, guid) {
 	}
 }
 
-function addEvent(target, eventType, fn){
-	if (typeof eventType !== "string") {
-		return;
-	}
-	eventType = eventType.toLowerCase();
-	if (target.addEventListener) {
-		target.addEventListener(eventType, fn);
-	} else if (target.attachEvent) {
-		target.attachEvent('on' + eventType, fn);
-	} else {
-		target['on' + eventType] = fn;
-	}
-}
-
-function removeEvent(target, eventType, fn) {
-	if (typeof eventType !== "string") {
-		return;
-	}
-	eventType = eventType.toLowerCase();
-	if (target.removeEventListener) {
-		target.removeEventListener(eventType, fn);
-	} else if (target.detachEvent) {
-		target.detachEvent('on' + eventType, fn);
-	} else {
-		target['on' + eventType] = null;
-	}
-}
-
 jsDom.Event = {
 	Types: {
 		Mouse: ["click", "contextmenu", "dblclick", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "onwheel"],
@@ -58,7 +30,7 @@ jsDom.Event = {
 		//    - Any
 		return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
 	},
-	off: function (target, eventType, fn) {
+	detach: function (target, eventType, fn) {
 		if (typeof eventType !== "string") {
 			return;
 		}
@@ -71,7 +43,7 @@ jsDom.Event = {
 			target['on' + eventType] = null;
 		}
 	},
-	on: function (target, eventType, fn, once) {
+	attach: function (target, eventType, fn, once) {
 		var orignFn = fn;
 		if (once) {
 			fn = function (event) {
@@ -143,7 +115,7 @@ jsDom.Event = {
 					&& jsDom.Event.dispatch.apply(elem, arguments);
 				once && jsDom.Event.remove(elem, eventType, handler, selector);
 			};
-			this.on(elem, eventType, eventHandle, false);
+			this.attach(elem, eventType, eventHandle, false);
 		}
 		//selector 可以为null
 		handleObj = {
@@ -174,7 +146,7 @@ jsDom.Event = {
 		}
 
 		if (handlers.length === 0) {
-			this.off(elem, eventType, elemData.handle);
+			this.detach(elem, eventType, elemData.handle);
 			delete elemData.events[eventType];
 		}
 

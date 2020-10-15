@@ -5,10 +5,10 @@ jsDom.Data = function () {
 }
 
 jsDom.Data.uid = 1;
+jsDom.Data.cacheType = {
+    Event: "Event"
+};
 jsDom.Data.prototype = {
-    dataType: {
-        events: "events"
-    },
     cache: function (owner) {
         var value = owner[this.expando];
         if (!value) {
@@ -69,39 +69,45 @@ jsDom.Data.prototype = {
     hasData: function (owner) {
         var cache = owner[this.expando];
         return cache !== undefined && !jQuery.isEmptyObject(cache);
-    },
-    addEventHandle: function (owner, eventType, eventHandleObj, data) {
-        var handlers,
-            events = this.get(owner, this.dataType.events);
-        if (!events) {
-            var cache = this.cache(owner);
-            events = cache.events = Object.create(null);
-        }
-
-        if (!events[eventType]) {
-            events[eventType] = Object.create(Array.prototype);
-        }
-
-        handlers = events[eventType];
-        handlers.push(eventHandleObj);
-    },
-    hasEventHandle:function(owner,eventType,eventhandleObj){
-        var handlers,i=0,
-            events = this.get(owner, this.dataType.events);
-        if (!events) {
-            var cache = this.cache(owner);
-            events = cache.events = Object.create(null);
-        }
-
-        if (!events[eventType]) {
-            events[eventType] = Object.create(Array.prototype);
-        }
-        handlers = events[eventType];
-        for(;i<handlers.length;i++){
-            if(eventhandleObj.guid==handlers[i].guid){
-                return true;
-            }
-        }
-        return false;
     }
 }
+
+jsDom.EventData = jsDom.Data.prototype;
+
+jsDom.extend(jsDom.EventData, {
+    getEvent: function (owner, eventType) {
+        var event = this.get(owner, jsDom.Data.cacheType.Event);
+        return eventType ? event[eventType] : event;
+    },
+    addEventData: function (owner, eventType, data, unique) {
+        var cache = this.cache(owner);
+        if (!cache[jsDom.Data.cacheType.Event]) {
+            cache[jsDom.Data.cacheType.Event] = Object.create(null);
+        }
+        if (!cache[jsDom.Data.cacheType.Event][eventType]) {
+            cache[jsDom.Data.cacheType.Event][eventType] = [];
+        }
+        var datas = cache[jsDom.Data.cacheType.Event][eventType];
+        if (unique && datas.indexOf(data) >= 0) {
+            return;
+        }
+        datas.push(data);
+    },
+    removeEventData: function (owner, eventType, data) {
+        var cache = this.cache(owner);
+        if (!cache[jsDom.Data.cacheType.Event] || !cache[jsDom.Data.cacheType.Event][eventType]) {
+            return;
+        }
+        var datas = cache[jsDom.Data.cacheType.Event][eventType];
+        var index = datas.indexOf(data);
+        if (index >= 0) {
+            datas.splice(index, 1);
+        }
+        if(datas.length===0 && cache[jsDom.Data.cacheType.Event][eventType]){
+            delete cache[jsDom.Data.cacheType.Event][eventType];
+        }
+        if(jsDom.isEmptyObject(cache[jsDom.Data.cacheType.Event])){
+            this.remove(owner,jsDom.Data.cacheType.Event);
+        }
+    }
+});

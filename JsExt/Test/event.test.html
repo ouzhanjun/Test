@@ -5,10 +5,10 @@
     <meta charset="utf-8">
     <title>菜鸟教程(runoob.com)</title>
 
-    <script src="core.js"></script>
-    <script src="init.js"></script>
-    <script src="data.js"></script>
-    <script src="event.js"></script>
+    <script src="../core.js"></script>
+    <script src="../init.js"></script>
+    <script src="../data.js"></script>
+    <script src="../event.js"></script>
 </head>
 
 <body>
@@ -25,15 +25,12 @@
     </ul>
 </body>
 <script>
-    var elem = document.getElementById("demo");
-    /*
-    jsDom.Event.bind(elem, "click", function (event) {
-        console.log(event);
-    }, true, true, true);
-    */
-    var f = { a: "abc", f: function (e, data) { console.log(e); console.log(data); } };
-    //jsDom.Event.add(elem, "click", f.f, f, "ABC");
-    jsDom.Event.bind(elem,"click", f.f,"ABCD",true);
+    var a = new jsDom.Data();
+    var b = jsDom.EventData;
+    var handler=function(){console.log("test");};
+    b.addEventData(a, "click", handler);
+    var c=b.getEvent(a, "click");
+    b.removeEventData(a, "click", handler);
 </script>
 
 </html>
