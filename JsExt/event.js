@@ -5,7 +5,7 @@ function EventHandler(handler, selector, data, guid) {
 	this.guid = handler.guid;
 	this.execute = function (event) {
 		var args = new Array(arguments.length);
-		args[0]=event;
+		args[0] = event;
 		args[args.length] = this.data;
 		this.handler.apply(this.selector, args);
 	}
@@ -43,14 +43,7 @@ jsDom.Event = {
 			target['on' + eventType] = null;
 		}
 	},
-	attach: function (target, eventType, fn, once) {
-		var orignFn = fn;
-		if (once) {
-			fn = function (event) {
-				jsDom.Event.off(target, eventType, fn);
-				return orignFn.apply(this, arguments);
-			};
-		}
+	attach: function (target, eventType, fn) {
 		if (typeof eventType !== "string") {
 			return;
 		}
@@ -67,63 +60,34 @@ jsDom.Event = {
 		var i, handleObj, handler, selector, data,
 			args = new Array(arguments.length);
 		var event = nativeEvent;
-		var handlers = (jsDom.Event.dataCache.get(this, "events") || Object.create(null))
-		[event.type] || [];
-
-		args[0] = event;
-
-		for (i = 1; i < arguments.length; i++) {
-			args[i] = arguments[i];
-		}
+		var handlers = jsDom.EventData.getEvent(this, event.type) || [];
 
 		var j = 0;
-		while (handleObj = handlers[j++]) {
-			handler = handleObj.handler;
-			selector = handleObj.selector;
-			data = handleObj.data;
-			args[args.length] = data;
-			handler.apply(selector, args);
+		while (handler = handlers[j++]) {
+			if (handler instanceof EventHandler) {
+				handler.execute(event);
+			}
 		}
 	},
 	add: function (elem, eventType, handler, selector, data, once) {
-		var elemData = this.dataCache.get(elem);
-		var handleObj = Object.create(null),
-			handlers, eventHandle;
+		var elemData;
+		var handlers, eventHandle, newHandler;
 
 		// Only attach events to objects that accept data
 		if (!this.acceptData(elem)) {
 			return;
 		}
-
-		if (!elemData.events) {
-			elemData.events = Object.create(null);
-		}
-
-		if (!elemData.events[eventType]) {
-			elemData.events[eventType] = Object.create(Array.prototype);
-		}
-
-		handlers = elemData.events[eventType];
-
-		if (!handler.guid) {
-			handler.guid = jsDom.guid++;
-		}
-
+		newHandler = new EventHandler(handler, elem, data, jsDom.guid++);
+		jsDom.EventData.addEventData(elem, eventType, newHandler);
+		elemData = jsDom.EventData.getEvent(elem, eventType);
 		if (!(eventHandle = elemData.handle)) {
 			eventHandle = elemData.handle = function (e) {
 				typeof jsDom !== "undefined"
 					&& jsDom.Event.dispatch.apply(elem, arguments);
 				once && jsDom.Event.remove(elem, eventType, handler, selector);
 			};
-			this.attach(elem, eventType, eventHandle, false);
+			this.attach(elem, eventType, eventHandle);
 		}
-		//selector 可以为null
-		handleObj = {
-			handler: handler,
-			selector: selector,
-			data: data,
-			guid: handler.guid
-		};
 
 		handlers.push(handleObj);
 	},
