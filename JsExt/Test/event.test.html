@@ -25,11 +25,12 @@
     </ul>
 </body>
 <script>
-    var test = {};
-    var a =new DataDictionary();
-
-    a.setEventHandler(test, "click", function () { alert("a"); });
-    var event = a.getEvent(test);
+    var a = new jsDom.Data();
+    var b = jsDom.EventData;
+    var handler=function(){console.log("test");};
+    b.addEventData(a, "click", handler);
+    var c=b.getEvent(a, "click");
+    b.removeEventData(a, "click", handler);
 </script>
 
 </html>

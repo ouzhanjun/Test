@@ -5,12 +5,10 @@ jsDom.Data = function () {
 }
 
 jsDom.Data.uid = 1;
-jsDom.Data.dataType = {
+jsDom.Data.cacheType = {
     Event: "Event"
 };
-
 jsDom.Data.prototype = {
-
     cache: function (owner) {
         var value = owner[this.expando];
         if (!value) {
@@ -74,60 +72,42 @@ jsDom.Data.prototype = {
     }
 }
 
-function DataDictionary() {
-};
-DataDictionary.prototype =new jsDom.Data();
-DataDictionary.prototype.getEvent = function (owner) {
-    return this.get(owner, jsDom.Data.dataType.Event);
-}
+jsDom.EventData = jsDom.Data.prototype;
 
-DataDictionary.prototype.setEventHandler = function (owner, eventType, handler) {
-    var handlers,
-        events = this.get(owner, jsDom.Data.dataType.Event);
-    if (!events) {
+jsDom.extend(jsDom.EventData, {
+    getEvent: function (owner, eventType) {
+        var event = this.get(owner, jsDom.Data.cacheType.Event);
+        return eventType ? event[eventType] : event;
+    },
+    addEventData: function (owner, eventType, data, unique) {
         var cache = this.cache(owner);
-        events = cache.events = Object.create(null);
-    }
-
-    if (!events[eventType]) {
-        events[eventType] = Object.create(Array.prototype);
-    }
-
-    handlers = events[eventType];
-    handlers.push(handler);
-}
-
-DataDictionary.prototype.hasEventHandler = function (owner, eventType, handler) {
-    var handlers, i = 0,
-        events = this.get(owner, this.dataType.events);
-    if (!events) {
+        if (!cache[jsDom.Data.cacheType.Event]) {
+            cache[jsDom.Data.cacheType.Event] = Object.create(null);
+        }
+        if (!cache[jsDom.Data.cacheType.Event][eventType]) {
+            cache[jsDom.Data.cacheType.Event][eventType] = [];
+        }
+        var datas = cache[jsDom.Data.cacheType.Event][eventType];
+        if (unique && datas.indexOf(data) >= 0) {
+            return;
+        }
+        datas.push(data);
+    },
+    removeEventData: function (owner, eventType, data) {
         var cache = this.cache(owner);
-        events = cache.events = Object.create(null);
-    }
-
-    if (!events[eventType]) {
-        events[eventType] = Object.create(Array.prototype);
-    }
-    handlers = events[eventType];
-    for (; i < handlers.length; i++) {
-        if (handler.guid == handlers[i].guid) {
-            return true;
+        if (!cache[jsDom.Data.cacheType.Event] || !cache[jsDom.Data.cacheType.Event][eventType]) {
+            return;
+        }
+        var datas = cache[jsDom.Data.cacheType.Event][eventType];
+        var index = datas.indexOf(data);
+        if (index >= 0) {
+            datas.splice(index, 1);
+        }
+        if(datas.length===0 && cache[jsDom.Data.cacheType.Event][eventType]){
+            delete cache[jsDom.Data.cacheType.Event][eventType];
+        }
+        if(jsDom.isEmptyObject(cache[jsDom.Data.cacheType.Event])){
+            this.remove(owner,jsDom.Data.cacheType.Event);
         }
     }
-    return false;
-}
-
-DataDictionary.prototype.removeEventHandler = function (owner, eventType, handler) {
-    var handlers, i = 0,
-        events = this.get(owner, this.dataType.events);
-    if (!events || !events[eventType]) {
-        return;
-    }
-
-    handlers = events[eventType];
-    for (; i < handlers.length; i++) {
-        if (handler.guid == handlers[i].guid) {
-            handlers.splice(i, 1);
-        }
-    }
-}
+});

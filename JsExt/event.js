@@ -1,30 +1,13 @@
-
-
-function addEvent(target, eventType, fn) {
-	if (typeof eventType !== "string") {
-		return;
-	}
-	eventType = eventType.toLowerCase();
-	if (target.addEventListener) {
-		target.addEventListener(eventType, fn);
-	} else if (target.attachEvent) {
-		target.attachEvent('on' + eventType, fn);
-	} else {
-		target['on' + eventType] = fn;
-	}
-}
-
-function removeEvent(target, eventType, fn) {
-	if (typeof eventType !== "string") {
-		return;
-	}
-	eventType = eventType.toLowerCase();
-	if (target.removeEventListener) {
-		target.removeEventListener(eventType, fn);
-	} else if (target.detachEvent) {
-		target.detachEvent('on' + eventType, fn);
-	} else {
-		target['on' + eventType] = null;
+function EventHandler(handler, selector, data, guid) {
+	this.handler = handler;
+	this.selector = selector;
+	this.data = data;
+	this.guid = handler.guid;
+	this.execute = function (event) {
+		var args = new Array(arguments.length);
+		args[0]=event;
+		args[args.length] = this.data;
+		this.handler.apply(this.selector, args);
 	}
 }
 
@@ -46,6 +29,39 @@ jsDom.Event = {
 		//  - Object
 		//    - Any
 		return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
+	},
+	detach: function (target, eventType, fn) {
+		if (typeof eventType !== "string") {
+			return;
+		}
+		eventType = eventType.toLowerCase();
+		if (target.removeEventListener) {
+			target.removeEventListener(eventType, fn);
+		} else if (target.detachEvent) {
+			target.detachEvent('on' + eventType, fn);
+		} else {
+			target['on' + eventType] = null;
+		}
+	},
+	attach: function (target, eventType, fn, once) {
+		var orignFn = fn;
+		if (once) {
+			fn = function (event) {
+				jsDom.Event.off(target, eventType, fn);
+				return orignFn.apply(this, arguments);
+			};
+		}
+		if (typeof eventType !== "string") {
+			return;
+		}
+		eventType = eventType.toLowerCase();
+		if (target.addEventListener) {
+			target.addEventListener(eventType, fn);
+		} else if (target.attachEvent) {
+			target.attachEvent('on' + eventType, fn);
+		} else {
+			target['on' + eventType] = fn;
+		}
 	},
 	dispatch: function (nativeEvent) {
 		var i, handleObj, handler, selector, data,
@@ -71,7 +87,7 @@ jsDom.Event = {
 	},
 	add: function (elem, eventType, handler, selector, data, once) {
 		var elemData = this.dataCache.get(elem);
-		var handleObj,
+		var handleObj = Object.create(null),
 			handlers, eventHandle;
 
 		// Only attach events to objects that accept data
@@ -99,10 +115,15 @@ jsDom.Event = {
 					&& jsDom.Event.dispatch.apply(elem, arguments);
 				once && jsDom.Event.remove(elem, eventType, handler, selector);
 			};
-			this.on(elem, eventType, eventHandle, false);
+			this.attach(elem, eventType, eventHandle, false);
 		}
 		//selector 可以为null
-		handleObj = new EventHandler(handler, selector, data, handler.guid);
+		handleObj = {
+			handler: handler,
+			selector: selector,
+			data: data,
+			guid: handler.guid
+		};
 
 		handlers.push(handleObj);
 	},
@@ -125,7 +146,7 @@ jsDom.Event = {
 		}
 
 		if (handlers.length === 0) {
-			this.off(elem, eventType, elemData.handle);
+			this.detach(elem, eventType, elemData.handle);
 			delete elemData.events[eventType];
 		}
 
