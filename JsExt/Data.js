@@ -88,7 +88,7 @@ jsDom.extend(jsDom.EventData, {
             cache[jsDom.Data.cacheType.Event][eventType] = [];
         }
         var datas = cache[jsDom.Data.cacheType.Event][eventType];
-        if (unique && datas.indexOf(data) >= 0) {
+        if (unique && this.indexOf(owner, eventType, data) >= 0) {
             return;
         }
         datas.push(data);
@@ -99,15 +99,30 @@ jsDom.extend(jsDom.EventData, {
             return;
         }
         var datas = cache[jsDom.Data.cacheType.Event][eventType];
-        var index = datas.indexOf(data);
+        var index = this.indexOf(owner, eventType, data);
         if (index >= 0) {
             datas.splice(index, 1);
         }
-        if(datas.length===0 && cache[jsDom.Data.cacheType.Event][eventType]){
+        if (datas.length === 0 && cache[jsDom.Data.cacheType.Event][eventType]) {
             delete cache[jsDom.Data.cacheType.Event][eventType];
         }
-        if(jsDom.isEmptyObject(cache[jsDom.Data.cacheType.Event])){
-            this.remove(owner,jsDom.Data.cacheType.Event);
+        if (jsDom.isEmptyObject(cache[jsDom.Data.cacheType.Event])) {
+            this.remove(owner, jsDom.Data.cacheType.Event);
         }
+    },
+    indexOf: function (owner, eventType, data) {
+        var cache = this.cache(owner);
+        var handler;
+        if (!cache[jsDom.Data.cacheType.Event] || !cache[jsDom.Data.cacheType.Event][eventType]) {
+            return;
+        }
+        var datas = cache[jsDom.Data.cacheType.Event][eventType];
+        for (var i = 0; i < datas.length; i++) {
+            handler = datas[0];
+            if (handler.handler === data) {
+                return i;
+            }
+        }
+        return -1;
     }
 });

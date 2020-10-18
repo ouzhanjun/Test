@@ -2,7 +2,8 @@ function EventHandler(handler, selector, data, guid) {
 	this.handler = handler;
 	this.selector = selector;
 	this.data = data;
-	this.guid = handler.guid;
+	this["guid"]= this.handler["guid"] = guid;
+	
 	this.execute = function (event) {
 		var args = new Array(arguments.length);
 		args[0] = event;
@@ -22,12 +23,6 @@ jsDom.Event = {
 	dataCache: new jsDom.Data(),
 	acceptData: function (owner) {
 
-		// Accepts only:
-		//  - Node
-		//    - Node.ELEMENT_NODE
-		//    - Node.DOCUMENT_NODE
-		//  - Object
-		//    - Any
 		return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
 	},
 	detach: function (target, eventType, fn) {
@@ -77,6 +72,7 @@ jsDom.Event = {
 		if (!this.acceptData(elem)) {
 			return;
 		}
+
 		newHandler = new EventHandler(handler, elem, data, jsDom.guid++);
 		jsDom.EventData.addEventData(elem, eventType, newHandler);
 		elemData = jsDom.EventData.getEvent(elem, eventType);
@@ -88,34 +84,19 @@ jsDom.Event = {
 			};
 			this.attach(elem, eventType, eventHandle);
 		}
-
-		handlers.push(handleObj);
 	},
 	remove: function (elem, eventType, handler, selector) {
-		var handlers, j, handleObj,
-			elemData = this.dataCache.get(elem);
+		var handlers, j,
+			elemData = jsDom.EventData.getEvent(elem, eventType);
 
-		if (!elemData || !(events = elemData.events)) {
+		if (!elemData) {
 			return;
 		}
 
-		handlers = events[eventType] || [];
-		for (var i = 0; i < handlers.length; i++) {
-			handleObj = handlers[i];
-			if ((!handler || handleObj.guid === handler.guid) &&
-				(!selector || handleObj.selector === selector && handleObj.selector)) {
-				handlers.splice(i, 1);
-				break;
-			}
-		}
+		jsDom.EventData.removeEventData(elem, eventType, handler);
 
-		if (handlers.length === 0) {
+		if ((handlers = elemData) && handlers.length === 0 && elemData.handle) {
 			this.detach(elem, eventType, elemData.handle);
-			delete elemData.events[eventType];
-		}
-
-		if (jsDom.isEmptyObject(events)) {
-			this.dataCache.remove(elem, "events");
 		}
 	},
 	bind: function (target, eventType, handler, data, once) {

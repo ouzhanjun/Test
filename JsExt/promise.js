@@ -52,11 +52,11 @@ jsDom.Promise = function (fn) {
     this.rejectedCallbacks = new jsDom.callbacks("once memory");    //有一个理由，不能改变
 
     var _resolve = function (val) {
-        self.fulfilledCallbacks.fire.call(this, val);
+        self.fulfilledCallbacks.fireWith.call(this , val);
     }
 
     var _reject = function (val) {
-        self.rejectedCallbacks.fire.call(this, val);
+        self.rejectedCallbacks.fireWith.call(this, val);
     }
 
     this.resolve = function (val) {

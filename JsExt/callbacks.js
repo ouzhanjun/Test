@@ -5,6 +5,13 @@
 4.  设置一个标志位，unique 控制回掉函数列表不能添加存在的回调函数；
 5.  设置一个标志位，stopOnFalse 控制如果回调函数返回false则后续终止执行；
 */
+function Callee(data, caller) {
+    this.data = Array.isArray(data) ? data : [data];
+    this.caller = caller;
+    this.execute = function (callback) {
+        return callback.apply(this.caller, this.data);
+    }
+}
 
 jsDom.callbacks = function (fnOptions) {
     var StatusCode = {
@@ -15,20 +22,18 @@ jsDom.callbacks = function (fnOptions) {
     }
 
     //#region 设置回调列表参数
-    var options;
+    var options = {};
 
-    if (jsDom.isString(fnOptions)) {
-        options = {};
+    if (typeof fnOptions === "function") {
         jsDom.createProps(options, fnOptions, true);
     }
     else if (jsDom.isNumber(fnOptions)) {
-        options = {};
         for (var code in StatusCode) {
             options[code] = !!(fnOptions & StatusCode[code]);
         }
     }
     else {
-        options = options || {};
+        options = fnOptions || {};
     }
     //#endregion
 
@@ -37,22 +42,25 @@ jsDom.callbacks = function (fnOptions) {
         // 标志位，前值，例如使用异步处理时，异步需要记忆以便符合条件后再执行，此时前值作为回调函数的参数
         memory,
         list = [],
+        queue = [],
 
-        fire = function (args, caller) {
-            var callback, lastResult;
+        fire = function () {
+            var callback, callee;
             // 为所有未决的执行执行回调，尊重firingIndex覆盖和运行时更改
             firing = true;
 
             //执行所有回调函数
-            for (var i = 0; i < list.length; i++) {
-                callback = list[i];
-
-                lastResult = callback.apply(caller, args);
-                memory = args;
-
-                // Run callback and check for early termination
-                if (lastResult === false && options.stopOnFalse) {
-                    break;
+            for (var j = 0; j < queue.length; j++) {
+                if ((callee = queue.shift()) instanceof Callee) {
+                    for (var i = 0; i < list.length; i++) {
+                        if (typeof (callback = list[i]) !== "function") {
+                            continue;
+                        }
+                        memory = callee;
+                        if (memory.execute(callback) === false && options.stopOnFalse) {
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -67,44 +75,40 @@ jsDom.callbacks = function (fnOptions) {
                 list = [];
             }
 
-            return lastResult;
         },
         self = {
             // Add a callback or a collection of callbacks to the list
             add: function (callback) {
-                var ret;
+                if (typeof callback !== "function")
+                    return;
+
                 if (list) {
-                    if (!options.unique || this.indexOf(callback) < 0) {
+
+                    if (memory && memory instanceof Callee && !firing) {
+                        queue.push(memory);
+                    }
+
+                    if (!options.unique || !self.has(callback)) {
                         list.push(callback);
                     }
 
-                    if (memory && !firing) {
-                        ret = fire(memory, this);
+                    if (memory && memory instanceof Callee && !firing) {
+                        fire();
                     }
                 };
 
-                return ret;
+                return this;
             },
             remove: function (callback) {
-                var index = this.indexOf(callback);
+                var index = list.indexOf(callback);
                 while (index >= 0) {
                     list.splice(index, 1);
-                    index = this.indexOf(callback);
+                    index = list.indexOf(callback);
                 }
                 return this;
             },
-            indexOf: function (callback) {
-                return list.indexOf(callback);
-            },
             has: function (callback) {
-                var ret = false;
-                if (callback) {
-                    ret = this.indexOf(callback) >= 0;
-                }
-                else {
-                    ret = list.length > 0;
-                }
-                return ret;
+                return callback ? (list.indexOf(callback) >= 0) : (list.length > 0);
             },
             // 清空所有回调方法
             empty: function () {
@@ -113,8 +117,15 @@ jsDom.callbacks = function (fnOptions) {
                 }
                 return this;
             },
+            fireWith: function (data, caller) {
+                queue.push(new Callee(data, caller));
+                if (!firing) {
+                    fire();
+                }
+                return this;
+            },
             fire: function () {
-                var ret = fire(arguments, this);
+                var ret = fireWith(arguments, this);
                 return ret;
             }
         };
