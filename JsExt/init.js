@@ -20,7 +20,7 @@ var rootJsDom,
                 }
                 return this;
             }
-            else if (matches = rsingleTag.match(selector)) {
+            else if (matches = selector.match(rsingleTag)) {
                 //匹配标签<tag></tag>或<tag>或<tag/>
                 if (elem = document.createElement(matches[1].toLowerCase())) {
                     this.push(elem);
@@ -29,7 +29,8 @@ var rootJsDom,
             }
             else if (rhtml.test(selector)) {
                 //其他html
-
+                elems = jsDom.element.parseHTML(selector, context && context.nodeType ? context.ownerDocument || context : document, true);
+                this.push(elems);
             }
             else {
                 //其它字符串

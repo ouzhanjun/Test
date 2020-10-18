@@ -40,13 +40,13 @@ jsDom.element = {
         fragContainer.appendChild(frag);
         return fragContainer.firstChild;
     },
-    isAttached = function (elem) {
+    isAttached: function (elem) {
         return elem.ownerDocument && elem.ownerDocument.contains(elem);
     },
-    nodeName=function (elem, name) {
+    nodeName: function (elem, name) {
         return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
     },
-    getElementsByTagName=function (context, tag) {
+    getElementsByTagName: function (context, tag) {
         var ret;
         if (typeof context.getElementsByTagName !== "undefined") {
             ret = context.getElementsByTagName(tag || "*");
@@ -58,13 +58,13 @@ jsDom.element = {
             ret = [];
         }
 
-        if (tag === undefined || tag && nodeName(context, tag)) {
+        if (tag === undefined || tag && this.nodeName(context, tag)) {
             return [context].concat(ret);
         }
 
         return ret;
     },
-    buildFragment(elems, context, scripts, selection, ignored) {
+    buildFragment: function (elems, context, scripts, selection, ignored) {
         var elem, tmp, tag, wrap, matches,
             attached,
             nodes = [], j, i = 0,
@@ -78,10 +78,11 @@ jsDom.element = {
             base.href = document.location.href;
             context.head.appendChild(base);
         }
+
         var fragment = context.createDocumentFragment();
-        parsed = rsingleTag.match();
 
         for (; i < len; i++) {
+
             elem = elems[i];
 
             if (elem || elem === 0) {
@@ -93,10 +94,11 @@ jsDom.element = {
                 }
                 else {
                     tmp = tmp || fragment.appendChild(context.createElement("div"));
-                    matches = rtagName.match(elem);
+                    matches = elem.match(rtagName);
                     if (matches && matches.length > 1) {
                         tag = matches[1].toLowerCase();
                     }
+                    //解决table的问题
                     wrap = wrapMap[tag] || wrapMap._default;
                     tmp.innerHTML = (wrap[1] + elem + wrap[2]);
 
@@ -105,7 +107,7 @@ jsDom.element = {
                         tmp = tmp.lastChild;
                     }
 
-                    Array.push.apply(nodes, tmp.childNodes);
+                    jsDom.merge(nodes, tmp.childNodes);
 
                     tmp = fragment.firstChild;
                     tmp.textContent = "";
@@ -139,7 +141,7 @@ jsDom.element = {
 
         return fragment;
     },
-    parseHTML(data, context, keepScripts) {
+    parseHTML: function (data, context, keepScripts) {
         var matches, base, scripts, parsed;
         if (!context) {
             context = document.implementation.createHTMLDocument("");
@@ -150,18 +152,18 @@ jsDom.element = {
         if (typeof data !== "string") {
             return [];
         }
-        else if (matches = rsingleTag.match(data)) {
+        else if (matches = data.match(rsingleTag)) {
             if (matches) {
                 return [context.createElement(matches[1])];
             }
         }
         else {
-            parsed = buildFragment([data], context, scripts);
+            parsed = this.buildFragment([data], context, scripts);
 
             if (scripts && scripts.length) {
                 jsDom(scripts).remove();
             }
-            return parsed.childNodes;
+            return jsDom.merge( [], parsed.childNodes );
         }
     }
 }

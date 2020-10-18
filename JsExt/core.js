@@ -150,6 +150,7 @@ jsDom.extend(jsDom, {
 			first[firstLen++] = second[i];
 		}
 		first.length = firstLen;
+		return first;
 	},
 
 	grep: function (elems, callback, callbackExpect) {
