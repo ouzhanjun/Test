@@ -1,37 +1,70 @@
 //?:pattern 匹配pattern但不获取匹配结果 ?=pattern 右侧必须为pattern ?<=pattern 位置之前为pattern的内容
-//comment: /* anything but * followed by / */
-//newline:\n \r\n \r \f
-//whitespace: \\x20(\s) \t newline
-//hex digit: 0-9 a-f A-F
-//escape : 1.not newline or hex digit 2.hex digit{1,6} +whitespace?
-//ident-token 
-var comment = "/\\*.*\\*/",
-    newline = "[\\r\\n\\f]|\\r\\n",
-    whitespace = "[\\x20\\t\\r\\n\\f]",
-    hexdigit = "[\\da-fA-F]",
-    // "////" 转义就是 \，值为“＆B”的标识符可以写为\ 26 B或\ 000026B
-    escape = "\\\\(" + hexdigit + "{1,6}" + whitespace + "?|([^\\r\\n\\f]|" + hexdigit + "))",
-    // https://www.w3.org/TR/css-syntax-3/#ident-token-diagram
-    identifier = "(" + escape + "|([a-zA-Z_]|[^\0-\\x7f])+([\\w-]|[^\0-\\x7f])+)",
-    attributes = "\\[" + whitespace + "*(" + identifier + ")(?:" + whitespace +
+//css 语法规则：字符串[string]不能包含\所以不能转义
+jsDom.Expr = {
+    ident: "[-]?{nmstart}{nmchar}*",
+    name: "{nmchar}+",
+    nmstart: "(?:[_a-z]|{nonascii}|{escape})",
+    nonascii: "[^\\0-\\237]",
+    unicode: "\\\\[0-9a-f]{1,6}(\\r\\n|[\\x20\\n\\r\\t\\f])?",
+    escape: "{unicode}|\\\\[^\\n\\r\\f0-9a-f]",
+    nmchar: "(?:[_a-z0-9-]|{nonascii}|{escape})",
+    num: "[0-9]+|[0-9]*\\.[0-9]+",
+    string: "{string1}|{string2}",
+    string1: "\"([^\\n\\r\\f\\\"]|\\\\{nl}|{escape})*\"",
+    string2: "'([^\\n\\r\\f\\']|\\\\{nl}|{escape})*'",
+    badstring: "{badstring1}|{badstring2}",
+    badstring1: "\"([^\\n\\r\\f\\\"]|\\{nl}|{escape})*\\?",
+    badstring2: "'([^\\n\\r\\f\\']|\\{nl}|{escape})*\\?",
+    badcomment: "{badcomment1}|{badcomment2}",
+    badcomment1: "\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*",
+    badcomment2: "\\/\\*[^*]*(\\*+[^/*][^*]*)*",
+    baduri: "{baduri1}|{baduri2}|{baduri3}",
+    baduri1: "url\\({w}([!#$%&*-~]|{nonascii}|{escape})*{w}",
+    baduri2: "url\\({w}{string}{w}",
+    baduri3: "url\\({w}{badstring}",
+    nl: "\\n|\\r\\n|\\r|\\f",
+    w: "{whitespace}*",
+    whitespace: "[\\x20\\t\\r\\n\\f]",
+    attributes: "\\[{w}({ident}){w}(([*^$|!~]?=){w}('((\\\\.|[^\\\\'])*)'|\"((\\\\.|[^\\\\\"])*)\"|({ident}))|){w}\\]",
+    pseudos: ":({ident})(\\((('(\\\\.|[^\\\\'])*'|\"(\\\\.|[^\\\\\"])*\")|((\\\\.|[^\\\\()[\\]]|{attributes})*)|.*)\\)|)",
+    rcomma: "{w},{w}",
+    rcombinators: "{w}([>+~]|whitespace){w}",
+    TAG: "^({ident}|[*])",
+    ID: "^#{ident}",
+    CLASS: "^.{ident}",
+    CHILD: "^:((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not"
+}
 
-        // Operator (capture 2)
-        "*([*^$|!~]?=)" + whitespace +
+function CreateRegExp() {
+    var exists = false, match, i;
+    var exprNames = Object.keys(jsDom.Expr);
+    var expr = new RegExp("(?<=\\{\\s*)([^\\}]*)(?=\\s*\\})", "gm");
+    var exprNum = new RegExp("\\d(,\\d?)?", "gm");
 
-        // "Attribute values must be CSS identifiers [capture 5] or strings [capture 3 or capture 4]"
-        "*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|(" + identifier + "))|)" +
-        whitespace + "*\\]",
+    for (var key in jsDom.Expr) {
+        var matches = jsDom.Expr[key].match(expr);
+        var i = 0;
+        while (matches && matches.length > 0) {
+            if (i++ > 5)
+                break;
+            exists = false;
+            for (var m in matches) {
+                if (exprNum.test(match = matches[m])) {
+                    continue;
+                }
+                if (exists = exprNames.indexOf(matches[m]) >= 0) {
+                    break;
+                }
+            }
+            if (exists === true) {
+                jsDom.Expr[key] = jsDom.String.format(jsDom.Expr[key], jsDom.Expr);
+            }
+            else {
+                break;
+            }
+            matches = jsDom.Expr[key].match(expr);
+        }
+    }
+}
 
-
-    pseudos = ":(" + identifier + ")(?:\\((" +
-
-        // To reduce the number of selectors needing tokenize in the preFilter, prefer arguments:
-        // 1. quoted (capture 3; capture 4 or capture 5)
-        "('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|" +
-
-        // 2. simple (capture 6)
-        "((?:\\\\.|[^\\\\()[\\]]|" + attributes + ")*)|" +
-
-        // 3. anything else (capture 2)
-        ".*" +
-        ")\\)|)";
+CreateRegExp();

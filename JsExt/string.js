@@ -11,7 +11,7 @@ jsDom.String = {
 			if (arguments.length == 2 && typeof (arguments[1]) == "object") {
 				var args = arguments[1];
 				for (var key in args) {
-					var reg = new RegExp("\\{" + key + "\\}", "gm");
+					var reg = new RegExp("\\{\\s*" + key + "\\s*\\}", "gm");
 					if (args[key] !== undefined) {
 						result = result.replace(reg, args[key]);
 					}
@@ -19,7 +19,7 @@ jsDom.String = {
 			}
 			else {
 				for (var i = 1; i < arguments.length; i++) {
-					var reg = new RegExp("\\{" + (i - 1) + "\\}", "gm");
+					var reg = new RegExp("\\{\\s*" + (i - 1) + "\\s*\\}", "gm");
 					if (arguments[i] !== undefined) {
 						result = result.replace(reg, arguments[i]);
 					}
