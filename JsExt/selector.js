@@ -24,14 +24,15 @@ jsDom.Expr = {
     baduri3: "url\\({w}{badstring}",
     nl: "\\n|\\r\\n|\\r|\\f",
     w: "{whitespace}*",
-    whitespace: "[\\x20\\t\\r\\n\\f]",
+    whitespace: "[\\s]",
+    whitespace1: "[\\s\\t\\r\\n\\f]",
     attributes: "\\[{w}({ident}){w}(([*^$|!~]?=){w}('((\\\\.|[^\\\\'])*)'|\"((\\\\.|[^\\\\\"])*)\"|({ident}))|){w}\\]",
     pseudos: ":({ident})(\\((('(\\\\.|[^\\\\'])*'|\"(\\\\.|[^\\\\\"])*\")|((\\\\.|[^\\\\()[\\]]|{attributes})*)|.*)\\)|)",
     rcomma: "{w},{w}",
     rcombinators: "{w}([>+~]|whitespace){w}",
     TAG: "^({ident}|[*])",
     ID: "^#{ident}",
-    CLASS: "^.{ident}",
+    CLASS: "^\\.{ident}",
     CHILD: "^:((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not"
 }
 
