@@ -24,16 +24,17 @@ jsDom.Expr = {
     baduri3: "url\\({w}{badstring}",
     nl: "\\n|\\r\\n|\\r|\\f",
     w: "{whitespace}*",
-    whitespace: "[\\s]",
-    whitespace1: "[\\s\\t\\r\\n\\f]",
+    ws: "\\s",
+    whitespace: "[\\s\\t\\r\\n\\f]",
     attributes: "\\[{w}({ident}){w}(([*^$|!~]?=){w}('((\\\\.|[^\\\\'])*)'|\"((\\\\.|[^\\\\\"])*)\"|({ident}))|){w}\\]",
     pseudos: ":({ident})(\\((('(\\\\.|[^\\\\'])*'|\"(\\\\.|[^\\\\\"])*\")|((\\\\.|[^\\\\()[\\]]|{attributes})*)|.*)\\)|)",
     rcomma: "{w},{w}",
     rcombinators: "{w}([>+~]|{whitespace}){w}",
-    TAG: "^({ident}|[*])",
+    TAG: "({ident}|[*])",
     ID: "#{ident}",
     CLASS: "\\.{ident}",
-    CHILD: ":((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not"
+    CHILD: ":((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not",
+    MATCH:"({CLASS})|({ID})|({attributes})|({pseudos})|({rcombinators})|({TAG})"
 }
 
 function CreateRegExp() {
@@ -44,10 +45,7 @@ function CreateRegExp() {
 
     for (var key in jsDom.Expr) {
         var matches = jsDom.Expr[key].match(expr);
-        var i = 0;
         while (matches && matches.length > 0) {
-            if (i++ > 5)
-                break;
             exists = false;
             for (var m in matches) {
                 if (exprNum.test(match = matches[m])) {
