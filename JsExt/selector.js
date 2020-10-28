@@ -29,11 +29,11 @@ jsDom.Expr = {
     attributes: "\\[{w}({ident}){w}(([*^$|!~]?=){w}('((\\\\.|[^\\\\'])*)'|\"((\\\\.|[^\\\\\"])*)\"|({ident}))|){w}\\]",
     pseudos: ":({ident})(\\((('(\\\\.|[^\\\\'])*'|\"(\\\\.|[^\\\\\"])*\")|((\\\\.|[^\\\\()[\\]]|{attributes})*)|.*)\\)|)",
     rcomma: "{w},{w}",
-    rcombinators: "{w}([>+~]|whitespace){w}",
+    rcombinators: "{w}([>+~]|{whitespace}){w}",
     TAG: "^({ident}|[*])",
-    ID: "^#{ident}",
-    CLASS: "^\\.{ident}",
-    CHILD: "^:((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not"
+    ID: "#{ident}",
+    CLASS: "\\.{ident}",
+    CHILD: ":((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not"
 }
 
 function CreateRegExp() {
