@@ -1,7 +1,7 @@
 //?:pattern 匹配pattern但不获取匹配结果 ?=pattern 右侧必须为pattern ?<=pattern 位置之前为pattern的内容
 //css 语法规则：字符串[string]不能包含\所以不能转义
 
-jsDom.initExpr = function () {
+var initSelector = function () {
     var exprStr = {
         ident: "[-]?{nmstart}{nmchar}*",
         name: "{nmchar}+",
@@ -31,15 +31,15 @@ jsDom.initExpr = function () {
         pseudos: ":({name})(\\((('(\\\\.|[^\\\\'])*'|\"(\\\\.|[^\\\\\"])*\")|((\\\\.|[^\\\\()[\\]]|{attributes})*)|.*)\\)|)",
         rcomma: "{w},{w}",
         rcombinators: "{w}([>+~]|{whitespace}){w}",
-        chname: "(?={rcombinators}|[\\.#:\\[\\]]|)[^\\.#:\\[\\]>+~\\s\\t\\r\\n\\f]+(?<={rcombinators}|[\\.#:\\[\\]]|)",
+        word: "(?={rcombinators}|[\\.#:\\[\\]]|)[^\\.#:\\[\\]>+~\\s\\t\\r\\n\\f]+(?<={rcombinators}|[\\.#:\\[\\]]|)",
         tag: "({name}|[*])",
         id: "#{name}",
         class: "\\.{name}",
         child: ":((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not",
-        match: "({class})|({id})|({attributes})|({pseudos})|({rcombinators})|({chname})"
+        match: "({class})|({id})|({attributes})|({pseudos})|({rcombinators})|({word})"
     }
-    
-    var exists = false, match, i;
+
+    var exists = false, match, matches, i;
     var exprNames = Object.keys(exprStr);
     var exprVar = new RegExp("(?<=\\{" + exprStr.whitespace + "*)([^\\}]*)(?=" + exprStr.whitespace + "*\\})", "gmi");
     var exprNum = new RegExp("\\d(,\\d?)?", "gmi");
@@ -48,8 +48,7 @@ jsDom.initExpr = function () {
     }
 
     for (var key in exprStr) {
-        var matches = fnMatch(key, exprVar);
-        while (matches && matches.length > 0) {
+        while ((matches = fnMatch(key, exprVar)) && matches.length > 0) {
             exists = false;
             for (var m in matches) {
                 if (exprNum.test(match = matches[m])) {
@@ -60,23 +59,48 @@ jsDom.initExpr = function () {
                 }
             }
 
-            if (exists === true) {
-                exprStr[key] = jsDom.String.format(exprStr[key], exprStr);
-                matches = fnMatch(key, exprVar);
-            }
-            else {
+            if (exists === false) {
                 break;
             }
+            exprStr[key] = jsDom.String.format(exprStr[key], exprStr);
         }
     }
 
-    jsDom.DomFindExpr = {
-        TAG: new RegExp(exprStr.tag, "gmi"),
-        ID: new RegExp(exprStr.id, "gmi"),
-        CLASS: new RegExp(exprStr.class, "gmi"),
+    jsDom.DomFindExpression = {
+        TAG: new RegExp("^" + exprStr.tag + "$", "gmi"),
+        ID: new RegExp("^" + exprStr.id + "$", "gmi"),
+        CLASS: new RegExp("^" + exprStr.class + "$", "gmi"),
         MATCH: new RegExp(exprStr.match, "gmi"),
-        CHILD: new RegExp(exprStr.child, "gmi")
+        CHILD: new RegExp("^" + exprStr.child + "$", "gmi")
+    }
+
+    jsDom.querySelectorAll = function (selector, context) {
+        var elementlist, results = [], matches,
+            newContext = context || document,
+            nodeType = newContext && newContext.nodeType;
+
+        if (typeof selector !== "string")
+            return results;
+
+        if (!newContext || !newContext.nodeType || !(newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9)) {
+            var querySelectorAll = newContext.querySelectorAll;
+            if (querySelectorAll) {
+                elementlist = querySelectorAll.call(newContext, selector);
+                //return elementlist;
+            }
+
+            matches = selector.match(jsDom.DomFindExpression.MATCH);
+            var idMatches = matches.filter(function (val) {
+                return jsDom.DomFindExpression.ID.test(val);
+            });
+
+            if (idMatches && idMatches.length > 0) {
+                results.push(newContext.getElementById(idMatches[0]));
+            }
+
+            
+        }
     }
 }
 
-jsDom.initExpr();
+initSelector();

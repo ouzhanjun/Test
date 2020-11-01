@@ -8,6 +8,7 @@
     <script src="../core.js"></script>
     <script src="../init.js"></script>
     <script src="../string.js"></script>
+    <script src="../Array.js"></script>
     <script src="../selector.js"></script>
 </head>
 
@@ -17,7 +18,7 @@
     <button type="button">点击这里</button>
     <p>锚部分为 #part5</p>
     <button onclick="myFunction()">点我</button>
-    <p id="demo" class="cls1 cls2">demo</p>
+    <p id="demo" id="demo2"  class="cls1 cls2">demo</p>
     <ul class="cls1 cls2 cls3">
         <li>aa</li>
         <li>bb</li>
@@ -25,7 +26,14 @@
     </ul>
 </body>
 <script>
-    
+    var doc = document;
+    console.log(doc.nodeType);
+    var h1 = document.getElementsByTagName("h1");
+    console.log(h1[0].nodeType);
+    var button = document.getElementsByTagName("button");
+    console.log(button[0].nodeType);
+
+    var q = jsDom.querySelectorAll("abc#demo d#dd");
 </script>
 
 </html>
