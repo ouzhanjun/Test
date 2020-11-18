@@ -81,38 +81,51 @@ var initSelectMatches = function () {
             docElem = (elem.ownerDocument || elem).documentElement;
         return /HTML$/i.test(namespaceURI || docElem && docElem.nodeName);
     }
-    jsDom.isNativeFn=function(){
+
+    jsDom.isNativeFn = function (fn) {
         var rnative = /^[^{]+\{\s*\[native \w/;
+        return rnative.test(fn);
     }
+
     jsDom.querySelectorAll = function (selector, context) {
         var elementlist,
+            elem,
             results = [],
             matches,
-            doc = context && context.ownerDocument,
-            documentIsHTML = jsDom.isHTMLDoc(doc),
             newContext = context || document,
+            documentIsHTML = jsDom.isHTMLDoc(newContext),
             nodeType = newContext && newContext.nodeType;
 
-        if (typeof selector !== "string")
+        if (typeof selector !== "string") {
             return results;
+        }
 
-        if (documentIsHTML && !newContext && newContext.nodeType && (newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9)) {
-            var querySelectorAll = newContext.querySelectorAll;
-            if (querySelectorAll) {
-                elementlist = querySelectorAll.call(newContext, selector);
-                //return elementlist;
+        if (documentIsHTML) {
+            if (nodeType != 11) {
+                var matchName = selector.trim();
+                //id
+                if (jsDom.elemMatch.ID.test(matchName)) {
+                    
+                }
             }
+            if (!newContext && newContext.nodeType && (newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9) {
 
-            matches = selector.match(jsDom.elemMatch.MATCH);
-            var idMatches = matches.filter(function (val) {
-                return jsDom.elemMatch.ID.test(val);
-            });
+                var querySelectorAll = newContext.querySelectorAll;
+                if (querySelectorAll) {
+                    elementlist = querySelectorAll.call(newContext, selector);
+                    //return elementlist;
+                }
 
-            if (idMatches && idMatches.length > 0) {
-                results.push(newContext.getElementById(idMatches[0]));
+                matches = selector.match(jsDom.elemMatch.MATCH);
+                var idMatches = matches.filter(function (val) {
+                    return jsDom.elemMatch.ID.test(val);
+                });
+
+                if (idMatches && idMatches.length > 0) {
+                    results.push(newContext.getElementById(idMatches[0]));
+                }
+
             }
-
-
         }
     }
 }
