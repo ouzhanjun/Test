@@ -1,8 +1,8 @@
 //?:pattern 匹配pattern但不获取匹配结果 ?=pattern 右侧必须为pattern ?<=pattern 位置之前为pattern的内容
 //css 语法规则：字符串[string]不能包含\所以不能转义
 
-var initSelector = function () {
-    var exprStr = {
+var initSelectMatches = function () {
+    var htmlExpr = {
         ident: "[-]?{nmstart}{nmchar}*",
         name: "{nmchar}+",
         nmstart: "(?:[_a-z]|{nonascii}|{escape})",
@@ -40,14 +40,14 @@ var initSelector = function () {
     }
 
     var exists = false, match, matches, i;
-    var exprNames = Object.keys(exprStr);
-    var exprVar = new RegExp("(?<=\\{" + exprStr.whitespace + "*)([^\\}]*)(?=" + exprStr.whitespace + "*\\})", "gmi");
+    var exprNames = Object.keys(htmlExpr);
+    var exprVar = new RegExp("(?<=\\{" + htmlExpr.whitespace + "*)([^\\}]*)(?=" + htmlExpr.whitespace + "*\\})", "gmi");
     var exprNum = new RegExp("\\d(,\\d?)?", "gmi");
     var fnMatch = function (key, expr) {
-        return exprStr[key].match(expr);
+        return htmlExpr[key].match(expr);
     }
 
-    for (var key in exprStr) {
+    for (var key in htmlExpr) {
         while ((matches = fnMatch(key, exprVar)) && matches.length > 0) {
             exists = false;
             for (var m in matches) {
@@ -62,45 +62,59 @@ var initSelector = function () {
             if (exists === false) {
                 break;
             }
-            exprStr[key] = jsDom.String.format(exprStr[key], exprStr);
+            htmlExpr[key] = jsDom.String.format(htmlExpr[key], htmlExpr);
         }
     }
 
-    jsDom.DomFindExpression = {
-        TAG: new RegExp("^" + exprStr.tag + "$", "gmi"),
-        ID: new RegExp("^" + exprStr.id + "$", "gmi"),
-        CLASS: new RegExp("^" + exprStr.class + "$", "gmi"),
-        MATCH: new RegExp(exprStr.match, "gmi"),
-        CHILD: new RegExp("^" + exprStr.child + "$", "gmi")
+    jsDom.elemMatch = {
+        TAG: new RegExp("^" + htmlExpr.tag + "$", "gmi"),           //是否匹配 tag
+        ID: new RegExp("^" + htmlExpr.id + "$", "gmi"),             //是否匹配 id
+        CLASS: new RegExp("^" + htmlExpr.class + "$", "gmi"),       //是否匹配 class
+        CHILD: new RegExp("^" + htmlExpr.child + "$", "gmi"),       //是否匹配 子节点伪类
+        ATTR: new RegExp("^" + htmlExpr.attributes + "$", "gmi"),   //是否匹配 特性
+        PSEUDOS: new RegExp("^" + htmlExpr.pseudos + "$", "gmi"),   //是否匹配 伪类
+        MATCH: new RegExp(htmlExpr.match, "gmi")
     }
 
+    jsDom.isHTMLDoc = function (elem) {
+        var namespaceURI = elem.namespaceURI,
+            docElem = (elem.ownerDocument || elem).documentElement;
+        return /HTML$/i.test(namespaceURI || docElem && docElem.nodeName);
+    }
+    jsDom.isNativeFn=function(){
+        var rnative = /^[^{]+\{\s*\[native \w/;
+    }
     jsDom.querySelectorAll = function (selector, context) {
-        var elementlist, results = [], matches,
+        var elementlist,
+            results = [],
+            matches,
+            doc = context && context.ownerDocument,
+            documentIsHTML = jsDom.isHTMLDoc(doc),
             newContext = context || document,
             nodeType = newContext && newContext.nodeType;
 
         if (typeof selector !== "string")
             return results;
 
-        if (!newContext || !newContext.nodeType || !(newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9)) {
+        if (documentIsHTML && !newContext && newContext.nodeType && (newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9)) {
             var querySelectorAll = newContext.querySelectorAll;
             if (querySelectorAll) {
                 elementlist = querySelectorAll.call(newContext, selector);
                 //return elementlist;
             }
 
-            matches = selector.match(jsDom.DomFindExpression.MATCH);
+            matches = selector.match(jsDom.elemMatch.MATCH);
             var idMatches = matches.filter(function (val) {
-                return jsDom.DomFindExpression.ID.test(val);
+                return jsDom.elemMatch.ID.test(val);
             });
 
             if (idMatches && idMatches.length > 0) {
                 results.push(newContext.getElementById(idMatches[0]));
             }
 
-            
+
         }
     }
 }
 
-initSelector();
+initSelectMatches();
