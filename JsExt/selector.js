@@ -87,25 +87,46 @@ var initSelectMatches = function () {
         return rnative.test(fn);
     }
 
+    JsDom.contains = function (a, b) {
+        var adown = a.nodeType === 9 ? a.documentElement : a,
+            bup = b && b.parentNode;
+
+        return a === bup || !!(bup && bup.nodeType === 1 && (
+            jsDom.isNativeFn(adown.contains) ? adown.contains(bup) :
+                jsDom.isNativeFn(a.compareDocumentPosition) && a.compareDocumentPosition(bup) & 16
+        ));
+    }
+
     jsDom.querySelectorAll = function (selector, context) {
         var elementlist,
             elem,
             results = [],
             matches,
-            newContext = context || document,
-            documentIsHTML = jsDom.isHTMLDoc(newContext),
-            nodeType = newContext && newContext.nodeType;
+            newContext = context || context.ownerDocument || document,
+            nodeType = context && context.nodeType;
 
-        if (typeof selector !== "string") {
+        if (typeof selector !== "string" || !selector || nodeType !== 1
+            && nodeType !== 9 && nodeType !== 11) {
             return results;
         }
 
         if (documentIsHTML) {
-            if (nodeType != 11) {
+            if (nodeType !== 11) {
                 var matchName = selector.trim();
                 //id
                 if (jsDom.elemMatch.ID.test(matchName)) {
-                    
+                    if (nodeType === 9) {
+                        if ((elem = context.getElementById(matchName))) {
+                            results.push(elem);
+                        }
+                        return results;
+                    }
+                } else {
+                    if (newContext && (elem = newContext.getElementById(matchName))
+                        && jsDom.contains(context, elem)) {
+                        results.push(elem);
+                        return results;
+                    }
                 }
             }
             if (!newContext && newContext.nodeType && (newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9) {
