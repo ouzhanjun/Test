@@ -18,7 +18,9 @@
     <button type="button">点击这里</button>
     <p>锚部分为 #part5</p>
     <button onclick="myFunction()">点我</button>
+    <div id="id">
     <p id="demo" id="demo2"  class="cls1 cls2">demo</p>
+    </div>
     <ul class="cls1 cls2 cls3">
         <li>aa</li>
         <li>bb</li>
@@ -33,7 +35,9 @@
     var button = document.getElementsByTagName("button");
     console.log(button[0].nodeType);
 
-    var q = jsDom.querySelectorAll("abc#demo d#dd");
+    var q = jsDom.querySelectorAll(" #demo ",document.getElementById("id"));
+    var q1 = jsDom.querySelectorAll("p");
+    var q1 = jsDom.querySelectorAll(".cls1");
 </script>
 
 </html>
