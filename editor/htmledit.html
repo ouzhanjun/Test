@@ -17,23 +17,16 @@
             document.getElementById("selectAll").onclick = xd.selectAll;
             document.getElementById("italic").onclick = xd.italic;
             document.getElementById("delete").onclick = xd.delete;
-			document.getElementById("strikeThrough").onclick = doWork;
+            document.getElementById("strikeThrough").onclick = doWork;
+            document.getElementById("removeFormat").onclick = xd.removeFormat;
         }, 20);
-        
+
     </script>
     <style>
-        <!--contenteditable获得焦点后的边框设置
-        -->
-        [contenteditable]:focus
-        {
-        outline:
-        none;
-        border:
-        1px
-        solid
-        #0094ff;
+        [contenteditable] {
+          outline: 0px solid transparent;
         }
-    </style>
+        </style>
 </head>
 
 <body>
@@ -44,6 +37,7 @@
     <button id="italic">italic</button>
     <button id="strikeThrough">strikeThrough</button>
     <button id="delete">delete</button>
+    <button id="removeFormat">removeFormat</button>
     <div contenteditable="true">
         <p>AAA</p>
         <p contenteditable="false">BBB</p>
