@@ -87,7 +87,7 @@ var initSelectMatches = function () {
         return rnative.test(fn);
     }
 
-    JsDom.contains = function (a, b) {
+    jsDom.contains = function (a, b) {
         var adown = a.nodeType === 9 ? a.documentElement : a,
             bup = b && b.parentNode;
 
@@ -102,34 +102,44 @@ var initSelectMatches = function () {
             elem,
             results = [],
             matches,
-            newContext = context || context.ownerDocument || document,
-            nodeType = context && context.nodeType;
+            match,
+            newContext = (context && context.ownerDocument) || document,
+            nodeType = context && context.nodeType,
+            documentIsHTML = jsDom.isHTMLDoc(newContext);
 
-        if (typeof selector !== "string" || !selector || nodeType !== 1
-            && nodeType !== 9 && nodeType !== 11) {
+        if (typeof selector !== "string" || !selector  ||
+            (context &&nodeType !== 1 && nodeType !== 9 && nodeType !== 11)) {
             return results;
         }
 
         if (documentIsHTML) {
             if (nodeType !== 11) {
                 var matchName = selector.trim();
-                //id
-                if (jsDom.elemMatch.ID.test(matchName)) {
+                //id selector
+                if (match = matchName.match(jsDom.elemMatch.ID)) {
                     if (nodeType === 9) {
-                        if ((elem = context.getElementById(matchName))) {
+                        if ((elem = context.getElementById(match[0].slice(1)))) {
                             results.push(elem);
                         }
                         return results;
-                    }
-                } else {
-                    if (newContext && (elem = newContext.getElementById(matchName))
-                        && jsDom.contains(context, elem)) {
-                        results.push(elem);
-                        return results;
+                    } else {
+                        if (newContext && (elem = newContext.getElementById(match[0].slice(1)))
+                            && (context && jsDom.contains(context, elem))) {
+                            results.push(elem);
+                            return results;
+                        }
                     }
                 }
+                else if (match = matchName.match(jsDom.elemMatch.TAG)) {
+                    Array.prototype.push.call(results, context.getElementByTagName(match[0]));
+                    return results;
+                }
+                else if (match = matchName.match(jsDom.elemMatch.CLASS)) {
+                    Array.prototype.push.call(results, context.getElementsByClassName(match[0].slice(1)));
+                    return results;
+                }
             }
-            if (!newContext && newContext.nodeType && (newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9) {
+            if (!newContext && newContext.nodeType && (newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9)) {
 
                 var querySelectorAll = newContext.querySelectorAll;
                 if (querySelectorAll) {
