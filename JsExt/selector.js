@@ -7,7 +7,7 @@ var initSelectMatches = function () {
         name: "{nmchar}+",
         nmstart: "(?:[_a-z]|{nonascii}|{escape})",
         nonascii: "[^\\0-\\237]",
-        unicode: "\\\\[0-9a-f]{1,6}(\\r\\n|[\\x20\\n\\r\\t\\f])?",
+        unicode: "\\\\[0-9a-f]{1,6}(?:\\r\\n|[\\x20\\n\\r\\t\\f])?",
         escape: "{unicode}|\\\\[^\\n\\r\\f0-9a-f]",
         nmchar: "(?:[_a-z0-9-]|{nonascii}|{escape})",
         num: "[0-9]+|[0-9]*\\.[0-9]+",
@@ -27,24 +27,81 @@ var initSelectMatches = function () {
         nl: "\\n|\\r\\n|\\r|\\f",
         w: "{whitespace}*",
         whitespace: "[\\s\\t\\r\\n\\f]",
-        attributes: "\\[{w}({name}){w}(([*^$|!~]?=){w}('((\\\\.|[^\\\\'])*)'|\"((\\\\.|[^\\\\\"])*)\"|({ident}))|){w}\\]",
+        attributes: "\\[{w}({name}){w}(?:([*^$|!~]?=){w}('(?:(?:\\\\.|[^\\\\'])*)'|\"(?:(?:\\\\.|[^\\\\\"])*)\"|(?:{ident}))|){w}\\]",
         pseudos: ":({name})(\\((('(\\\\.|[^\\\\'])*'|\"(\\\\.|[^\\\\\"])*\")|((\\\\.|[^\\\\()[\\]]|{attributes})*)|.*)\\)|)",
         rcomma: "{w},{w}",
-        rcombinators: "{w}([>+~]|{whitespace}){w}",
+        rcombinators: "{w}([>+~]|,|{whitespace}){w}",
         word: "(?={rcombinators}|[\\.#:\\[\\]]|)[^\\.#:\\[\\]>+~\\s\\t\\r\\n\\f]+(?<={rcombinators}|[\\.#:\\[\\]]|)",
         tag: "({name}|[*])",
-        id: "#{name}",
+        id: "#({name})",
         class: "\\.{name}",
         child: ":((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not",
         match: "({class})|({id})|({attributes})|({pseudos})|({rcombinators})|({word})"
     }
 
-    var exists = false, match, matches, i;
+    var exists = false, match, matches;
     var exprNames = Object.keys(htmlExpr);
     var exprVar = new RegExp("(?<=\\{" + htmlExpr.whitespace + "*)([^\\}]*)(?=" + htmlExpr.whitespace + "*\\})", "gmi");
     var exprNum = new RegExp("\\d(,\\d?)?", "gmi");
     var fnMatch = function (key, expr) {
         return htmlExpr[key].match(expr);
+    }
+    var runescape = new RegExp("\\\\[\\da-fA-F]{1,6}" + whitespace +
+        "?|\\\\([^\\r\\n\\f])", "g"),
+    var funescape = function (escape, nonHex) {
+        var high = "0x" + escape.slice(1) - 0x10000;
+
+        if (nonHex) {
+
+            // Strip the backslash prefix from a non-hex escape sequence
+            return nonHex;
+        }
+
+        // Replace a hexadecimal escape sequence with the encoded Unicode code point
+        // Support: IE <=11+
+        // For values outside the Basic Multilingual Plane (BMP), manually construct a
+        // surrogate pair
+        return high < 0 ?
+            String.fromCharCode(high + 0x10000) :
+            String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
+    },
+    var Expr = {
+        find: {
+            ID: function (id, context) {
+                if (context && typeof context.getElementById !== "undefined") {
+                    var elem = context.getElementById(id);
+                    return elem ? [elem] : [];
+                }
+            },
+            TAG: function (tag, context) {
+                if (context && typeof context.getElementsByTagName !== "undefined") {
+                    var elem = context.getElementsByTagName(tag);
+                    return elem ? [elem] : [];
+                }
+                else {
+                    return context.querySelectorAll(tag);
+                }
+            },
+            CLASS: function (className, context) {
+                if (context && typeof context.getElementsByClassName !== "undefined") {
+                    return context.getElementsByClassName(className);
+                }
+            }
+        },
+        relative: {
+            ">": { dir: "parentNode", first: true },
+            " ": { dir: "parentNode" },
+            "+": { dir: "previousSibling", first: true },
+            "~": { dir: "previousSibling" }
+        },
+        preFilter: {
+            ATTR: function (match) {
+                var matches = jsDom.elemMatch.ATTR.exec(match);
+                if (matches) {
+                    
+                }
+            }
+        }
     }
 
     for (var key in htmlExpr) {
@@ -98,64 +155,70 @@ var initSelectMatches = function () {
     }
 
     jsDom.querySelectorAll = function (selector, context) {
-        var elementlist,
-            elem,
+        var elem,
             results = [],
+            groups = [],
             matches,
             match,
-            newContext = (context && context.ownerDocument) || document,
+            index,
+            newContext = context || document,
             nodeType = context && context.nodeType,
+            newSelector = selector.trim(),
             documentIsHTML = jsDom.isHTMLDoc(newContext);
 
-        if (typeof selector !== "string" || !selector  ||
-            (context &&nodeType !== 1 && nodeType !== 9 && nodeType !== 11)) {
+        if (typeof newSelector !== "string" || !newSelector ||
+            (newContext && nodeType !== 1 && nodeType !== 9 && nodeType !== 11)) {
             return results;
         }
 
         if (documentIsHTML) {
             if (nodeType !== 11) {
-                var matchName = selector.trim();
-                //id selector
-                if (match = matchName.match(jsDom.elemMatch.ID)) {
+                if (match = newSelector.match(jsDom.elemMatch.ID)) {
                     if (nodeType === 9) {
-                        if ((elem = context.getElementById(match[0].slice(1)))) {
+                        if ((elem = newContext.getElementById(match[0].slice(1)))) {
                             results.push(elem);
                         }
                         return results;
                     } else {
                         if (newContext && (elem = newContext.getElementById(match[0].slice(1)))
-                            && (context && jsDom.contains(context, elem))) {
+                            && (newContext && jsDom.contains(newContext, elem))) {
                             results.push(elem);
                             return results;
                         }
                     }
                 }
-                else if (match = matchName.match(jsDom.elemMatch.TAG)) {
-                    Array.prototype.push.call(results, context.getElementByTagName(match[0]));
+                else if (match = newSelector.match(jsDom.elemMatch.TAG)) {
+                    Array.prototype.push.call(results, newContext.getElementsByTagName.call(newContext, match[0]));
                     return results;
                 }
-                else if (match = matchName.match(jsDom.elemMatch.CLASS)) {
-                    Array.prototype.push.call(results, context.getElementsByClassName(match[0].slice(1)));
+                else if (match = newSelector.match(jsDom.elemMatch.CLASS)) {
+                    Array.prototype.push.call(results, newContext.getElementsByClassName.call(newContext, match[0].slice(1)));
                     return results;
                 }
             }
-            if (!newContext && newContext.nodeType && (newContext.nodeType === 1 && newContext.nodeType === 11 && context.nodeType === 9)) {
+            if (newContext && newContext.nodeType && (newContext.nodeType === 1 || newContext.nodeType === 11 || newContext.nodeType === 9)) {
 
                 var querySelectorAll = newContext.querySelectorAll;
-                if (querySelectorAll) {
-                    elementlist = querySelectorAll.call(newContext, selector);
-                    //return elementlist;
+                if (false && querySelectorAll && jsDom.isNativeFn(querySelectorAll)) {
+                    results = querySelectorAll.call(newContext, newSelector);
+                    return results;
                 }
 
-                matches = selector.match(jsDom.elemMatch.MATCH);
-                var idMatches = matches.filter(function (val) {
-                    return jsDom.elemMatch.ID.test(val);
-                });
-
-                if (idMatches && idMatches.length > 0) {
-                    results.push(newContext.getElementById(idMatches[0]));
+                matches = newSelector.match(jsDom.elemMatch.MATCH);
+                while (matches.length > 0) {
+                    index = matches.indexOf(',');
+                    switch (index) {
+                        case 0:
+                            matches.splice(0, 1);
+                            break;
+                        case -1:
+                            groups.push(matches.splice(0, matches.length));
+                            break;
+                        default:
+                            groups.push(matches.splice(0, index));
+                            break;
+                    }
                 }
-
             }
         }
     }

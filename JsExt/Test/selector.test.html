@@ -13,7 +13,7 @@
 </head>
 
 <body>
-
+<div  id="d">
     <h1></h1>
     <button type="button">点击这里</button>
     <p>锚部分为 #part5</p>
@@ -26,6 +26,7 @@
         <li>bb</li>
         <li>cc</li>
     </ul>
+    </div>
 </body>
 <script>
     var doc = document;
@@ -35,9 +36,9 @@
     var button = document.getElementsByTagName("button");
     console.log(button[0].nodeType);
 
-    var q = jsDom.querySelectorAll(" #demo ",document.getElementById("id"));
+    var q = jsDom.querySelectorAll(" div .cls1,p ",document.getElementById("d"));
     var q1 = jsDom.querySelectorAll("p");
-    var q1 = jsDom.querySelectorAll(".cls1");
+    var q1 = jsDom.querySelectorAll("div .cls1");
 </script>
 
 </html>
