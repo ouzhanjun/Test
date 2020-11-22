@@ -7,9 +7,6 @@
     <script>
         var xd = new xeditor();
 
-        function doWork() {
-            xd.strikeThrough();
-        }
         setTimeout(function () {
             document.getElementById("bold").onclick = xd.bold;
             document.getElementById("cut").onclick = xd.cut;
@@ -17,7 +14,7 @@
             document.getElementById("selectAll").onclick = xd.selectAll;
             document.getElementById("italic").onclick = xd.italic;
             document.getElementById("delete").onclick = xd.delete;
-            document.getElementById("strikeThrough").onclick = doWork;
+            document.getElementById("strikeThrough").onclick = xd.strikeThrough;
             document.getElementById("removeFormat").onclick = xd.removeFormat;
         }, 20);
 

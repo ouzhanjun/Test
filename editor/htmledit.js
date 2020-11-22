@@ -23,15 +23,18 @@ var xeditor = function () {
         "defaultParagraphSeparator",
         "enableObjectResizing", "enableInlineTableEditing", "enableAbsolutePositionEditor",
     ];
-    
+
     var commandTypes = [editCommands, createCommands, controlCommands];
-    for (var gid in commandTypes) {
-        for (var i in commandTypes[gid]) {
-            var name = commandTypes[gid][i];
-            this[name] = function (val) {
-                document.execCommand(arguments.callee.cmd, false, val);
-            }
-            this[name].cmd = name;
+    var name;
+    var fn = function (n) {
+        return function (v) {
+            document.execCommand(n, false, v);
+        }
+    }
+    for (var c in commandTypes) {
+        for (var i in commandTypes[c]) {
+            name = commandTypes[c][i];
+            this[name] = fn(name);
         }
     }
 }
