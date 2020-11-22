@@ -28,17 +28,30 @@ var initSelectMatches = function () {
         w: "{whitespace}*",
         whitespace: "[\\s\\t\\r\\n\\f]",
         attributes: "\\[{w}({name}){w}(?:([*^$|!~]?=){w}('(?:(?:\\\\.|[^\\\\'])*)'|\"(?:(?:\\\\.|[^\\\\\"])*)\"|(?:{ident}))|){w}\\]",
-        pseudos: ":({name})(\\((('(\\\\.|[^\\\\'])*'|\"(\\\\.|[^\\\\\"])*\")|((\\\\.|[^\\\\()[\\]]|{attributes})*)|.*)\\)|)",
+        pseudos: ":({name})(?:\\(((?:'(?:(?:\\\\.|[^\\\\'])*)'|\"(?:(?:\\\\.|[^\\\\\"])*)\")|(?:(?:\\\\.|[^\\\\()[\\]]|{attributes})*)|.*)\\)|)",
         rcomma: "{w},{w}",
         rcombinators: "{w}([>+~]|,|{whitespace}){w}",
         word: "(?={rcombinators}|[\\.#:\\[\\]]|)[^\\.#:\\[\\]>+~\\s\\t\\r\\n\\f]+(?<={rcombinators}|[\\.#:\\[\\]]|)",
         tag: "({name}|[*])",
         id: "#({name})",
-        class: "\\.{name}",
-        child: ":((first|last|only|nth|nth-last)-(of-type|child))|root|empty|not",
+        class: "\\.({name})",
+        child: ":((first|last|only|nth|nth-last)-(of-type|child))",
         match: "({class})|({id})|({attributes})|({pseudos})|({rcombinators})|({word})"
     }
 
+    jsDom.createCache = function () {
+        var keys = [];
+
+        function cache(key, value) {
+            if (keys.push(key + " ") > Expr.cacheLength) {
+                delete cache[keys.shift()];
+            }
+            return (cache[key + " "] = value);
+        }
+        return cache;
+    }
+
+    var classCache = jsDom.createCache();
     var exists = false, match, matches;
     var exprNames = Object.keys(htmlExpr);
     var exprVar = new RegExp("(?<=\\{" + htmlExpr.whitespace + "*)([^\\}]*)(?=" + htmlExpr.whitespace + "*\\})", "gmi");
@@ -46,8 +59,8 @@ var initSelectMatches = function () {
     var fnMatch = function (key, expr) {
         return htmlExpr[key].match(expr);
     }
-    var runescape = new RegExp("\\\\[\\da-fA-F]{1,6}" + whitespace +
-        "?|\\\\([^\\r\\n\\f])", "g"),
+    var runescape = new RegExp("\\\\[\\da-fA-F]{1,6}" + htmlExpr.whitespace +
+        "?|\\\\([^\\r\\n\\f])", "g");
     var funescape = function (escape, nonHex) {
         var high = "0x" + escape.slice(1) - 0x10000;
 
@@ -64,7 +77,8 @@ var initSelectMatches = function () {
         return high < 0 ?
             String.fromCharCode(high + 0x10000) :
             String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
-    },
+    };
+
     var Expr = {
         find: {
             ID: function (id, context) {
@@ -93,14 +107,6 @@ var initSelectMatches = function () {
             " ": { dir: "parentNode" },
             "+": { dir: "previousSibling", first: true },
             "~": { dir: "previousSibling" }
-        },
-        preFilter: {
-            ATTR: function (match) {
-                var matches = jsDom.elemMatch.ATTR.exec(match);
-                if (matches) {
-                    
-                }
-            }
         }
     }
 
@@ -129,9 +135,128 @@ var initSelectMatches = function () {
         CLASS: new RegExp("^" + htmlExpr.class + "$", "gmi"),       //是否匹配 class
         CHILD: new RegExp("^" + htmlExpr.child + "$", "gmi"),       //是否匹配 子节点伪类
         ATTR: new RegExp("^" + htmlExpr.attributes + "$", "gmi"),   //是否匹配 特性
-        PSEUDOS: new RegExp("^" + htmlExpr.pseudos + "$", "gmi"),   //是否匹配 伪类
-        MATCH: new RegExp(htmlExpr.match, "gmi")
+        PSEUDOS: new RegExp("^" + htmlExpr.pseudos + "$", "gmi")   //是否匹配 伪类
     }
+
+    jsDom.MATCH = new RegExp(htmlExpr.match, "gmi");
+
+    jsDom.filter = {
+        ID: function (id) {
+            var attrId = id.replace(runescape, funescape);
+            return function (elem) {
+                return elem.getAttribute("id") === attrId;
+            };
+        },
+        TAG: function (nodeNameSelector) {
+            var expectedNodeName = nodeNameSelector.replace(runescape, funescape).toLowerCase();
+            return nodeNameSelector === "*" ?
+                function () { return true; } :
+                function (elem) {
+                    return elem.nodeName && elem.nodeName.toLowerCase() === expectedNodeName;
+                };
+        },
+        CLASS: function (className) {
+            var pattern = classCache[className + " "];
+
+            return pattern ||
+                (pattern = new RegExp("(^|" + htmlExpr.whitespace + "*)" + className +
+                    "(" + htmlExpr.whitespace + "*|$)")) &&
+                classCache(className, function (elem) {
+                    return pattern.test(
+                        typeof elem.className === "string" && elem.className ||
+                        typeof elem.getAttribute !== "undefined" &&
+                        elem.getAttribute("class") ||
+                        ""
+                    );
+                });
+        },
+        ATTR: function (name, operator, check) {
+            //返回 判断 attribute 是否符合要求
+            return function (elem) {
+                var result;
+                name = name.trim();
+                operator = operator.trim();
+                check = check.trim();
+                if (elem && elem.getAttribute && jsDom.isNativeFn(elem.getAttribute)) {
+                    result = elem.getAttribute(name);
+                }
+                else if (elem[name]) {
+                    result = elem[name];
+                }
+                if (result == null) {
+                    //属于自定义的操作符，不等于
+                    return operator === "!=";
+                }
+                result += "";
+
+                if (operator === "=") {         //相等
+                    return result === check;
+                }
+                if (operator === "!=") {        //不相等
+                    return result !== check;
+                }
+                if (operator === "^=") {        //字符串                                                                                                                                                                                                                          开头
+                    return check && result.indexOf(check) === 0;
+                }
+                if (operator === "*=") {        //字符串包含
+                    return check && result.indexOf(check) > -1;
+                }
+                if (operator === "$=") {        //字符串结尾
+                    return check && result.slice(-check.length) === check;
+                }
+                if (operator === "~=") {        //单词包含
+                    return (" " + result.replace(new RegExp(htmlExpr.whitespace + "+", "gmi"), " ") + " ")
+                        .indexOf(check) > -1;
+                }
+                if (operator === "|=") {        //单词开头
+                    return result === check || result.slice(0, check.length + 1) === check + "-";
+                }
+
+                return false;
+            }
+        },
+        PSEUDO: function (pseudo) {
+            return function (elem) {
+                if(type.toLowerCase()===":first-child")
+                {
+                }
+                if(type.toLowerCase()===":first-of-type")
+                {
+                }
+                if(type.toLowerCase()===":last-of-type")
+                {
+                }
+                if(type.toLowerCase()===":only-of-type")
+                {
+                }
+                if(type.toLowerCase()===":only-child")
+                {
+                }
+                if(type.toLowerCase()===":nth-child(2)")
+                {
+                }
+                if(type.toLowerCase()===":nth-last-child(2)")
+                {
+                }
+                if(type.toLowerCase()===":nth-of-type(2)")
+                {
+                }
+                if(type.toLowerCase()===":nth-last-of-type(2)")
+                {
+                }
+                if(type.toLowerCase()===":root")
+                {
+                }
+                if(type.toLowerCase()===":empty")
+                {
+                }
+                if(type.toLowerCase()===":target")
+                {
+                }
+            }
+        }
+    }
+
 
     jsDom.isHTMLDoc = function (elem) {
         var namespaceURI = elem.namespaceURI,
@@ -152,6 +277,35 @@ var initSelectMatches = function () {
             jsDom.isNativeFn(adown.contains) ? adown.contains(bup) :
                 jsDom.isNativeFn(a.compareDocumentPosition) && a.compareDocumentPosition(bup) & 16
         ));
+    }
+
+    jsDom.parseMatch = function (m) {
+        var match;
+        for (var i in jsDom.elemMatch) {
+            if (match = jsDom.elemMatch[i](m)) {
+
+            }
+        }
+    }
+
+    jsDom.groupMatch = function (group) {
+        var match, group,
+            val,
+            type,
+            tokens = [],
+            count = group.length;
+        while (count--) {
+            val = group[count];
+            for (type in jsDom.elemMatch) {
+                if (match = jsDom.elemMatch[type].exec(val)) {
+                    tokens.push({
+                        matches: match,
+                        type: type,
+                        value: val
+                    });
+                }
+            }
+        }
     }
 
     jsDom.querySelectorAll = function (selector, context) {
@@ -204,7 +358,7 @@ var initSelectMatches = function () {
                     return results;
                 }
 
-                matches = newSelector.match(jsDom.elemMatch.MATCH);
+                matches = newSelector.match(jsDom.MATCH);
                 while (matches.length > 0) {
                     index = matches.indexOf(',');
                     switch (index) {
@@ -218,6 +372,10 @@ var initSelectMatches = function () {
                             groups.push(matches.splice(0, index));
                             break;
                     }
+                }
+
+                for (var i in groups) {
+                    results.push(jsDom.groupMatch(groups[i]));
                 }
             }
         }
