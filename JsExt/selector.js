@@ -217,43 +217,34 @@ var initSelectMatches = function () {
         },
         PSEUDO: function (pseudo) {
             return function (elem) {
-                if(type.toLowerCase()===":first-child")
-                {
+                if (type.toLowerCase() === ":first-child") {
                 }
-                if(type.toLowerCase()===":first-of-type")
-                {
+                if (type.toLowerCase() === ":first-of-type") {
                 }
-                if(type.toLowerCase()===":last-of-type")
-                {
+                if (type.toLowerCase() === ":last-of-type") {
                 }
-                if(type.toLowerCase()===":only-of-type")
-                {
+                if (type.toLowerCase() === ":only-of-type") {
                 }
-                if(type.toLowerCase()===":only-child")
-                {
+                if (type.toLowerCase() === ":only-child") {
                 }
-                if(type.toLowerCase()===":nth-child(2)")
-                {
+                if (type.toLowerCase() === ":nth-child(2)") {
                 }
-                if(type.toLowerCase()===":nth-last-child(2)")
-                {
+                if (type.toLowerCase() === ":nth-last-child(2)") {
                 }
-                if(type.toLowerCase()===":nth-of-type(2)")
-                {
+                if (type.toLowerCase() === ":nth-of-type(2)") {
                 }
-                if(type.toLowerCase()===":nth-last-of-type(2)")
-                {
+                if (type.toLowerCase() === ":nth-last-of-type(2)") {
                 }
-                if(type.toLowerCase()===":root")
-                {
+                if (type.toLowerCase() === ":root") {
                 }
-                if(type.toLowerCase()===":empty")
-                {
+                if (type.toLowerCase() === ":empty") {
                 }
-                if(type.toLowerCase()===":target")
-                {
+                if (type.toLowerCase() === ":target") {
                 }
             }
+        },
+        pseudos: {
+            not:
         }
     }
 
