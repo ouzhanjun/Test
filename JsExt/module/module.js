@@ -1,27 +1,28 @@
 jsDom.Module = function () {
     this.require = function (path) {
-        var mod = this.require.modules[path];
+        var mod = this.modules[path];
         if (!mod) throw new Error('failed to require "' + path + '"');
         if (!mod.exports) {
             mod.exports = {};
-            mod.call(mod.exports, mod, mod.exports, this.require.relative(path));
+            mod.call(mod.exports, mod, mod.exports, this.relative(path));
         }
         return mod.exports;
     }
 
-    this.require.modules = {}
+    this.modules = {}
     var loadedJsFiles = {}
+    var initIsDone = false;
 
     this.register = function (path, exportModule) {
         var makeModule = function (module, exports, require) {
             module.exports = exportModule;
         }
-        this.require.modules[path] = makeModule;
+        this.modules[path] = makeModule;
     }
 
-    this.require.relative = function (parent) {
+    this.relative = function (parent) {
         return function (p) {
-            if ('.' != p.charAt(0)) return require(p);
+            if ('.' != p.charAt(0)) return this.require(p);
             var path = parent.split('/');
             var segs = p.split('/');
             path.pop();
@@ -32,12 +33,27 @@ jsDom.Module = function () {
                 else if ('.' != seg) path.push(seg);
             }
 
-            return require(path.join('/'));
+            return this.require(path.join('/'));
         };
     };
 
+    this.init = function () {
+        if (initisDone)
+            return;
+        var elems = document.getElementsByTagName("script");
+        for (var i in elems) {
+            var match = /src="(.*)"/.exec(elems[i].outerHTML);
+            var jsPath = match && match[1];
+            if (jsPath && !loadedJsFiles[jsPath]) {
+                loadedJsFiles[jsPath] = true;
+            }
+        }
+        initIsDone = true;
+    }
+
     //dependOnJsFile('myScript.js',callback);
     this.dependOnJsFile = function (jsPath, callback) {
+        !initIsDone && this.init();
         if (jsPath && !loadedJsFiles[jsPath]) {
             loadedJsFiles[jsPath] = true;
             var script = document.createElement('script'),
@@ -58,7 +74,7 @@ jsDom.Module = function () {
                 };
             }
 
-            script.src = url;
+            script.src = jsPath;
             document.getElementsByTagName('head')[0].appendChild(script);
         }
     }

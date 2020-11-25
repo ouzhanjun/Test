@@ -26,11 +26,10 @@
 </body>
 <script>
     var m=new jsDom.Module ();
-    m.register("./foo.js", function(module, exports, require){
-  module.exports = function(x) {
+    m.dependOnJsFile("../module.js");
+    m.register("./foo.js", function(x) {
     console.log(x);
-  };
-});
+  });
 
 var foo = m.require("./foo.js");
 foo("Hi");
