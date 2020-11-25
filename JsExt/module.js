@@ -1,10 +1,10 @@
 jsDom.Module = function () {
     this.require = function (path) {
-        var mod = require.modules[path];
+        var mod = this.require.modules[path];
         if (!mod) throw new Error('failed to require "' + path + '"');
         if (!mod.exports) {
             mod.exports = {};
-            mod.call(mod.exports, mod, mod.exports, require.relative(path));
+            mod.call(mod.exports, mod, mod.exports, this.require.relative(path));
         }
         return mod.exports;
     }
@@ -12,11 +12,11 @@ jsDom.Module = function () {
     this.require.modules = {}
     var loadedJsFiles = {}
 
-    this.require.register = function (path, exportModule) {
+    this.register = function (path, exportModule) {
         var makeModule = function (module, exports, require) {
             module.exports = exportModule;
         }
-        require.modules[path] = makeModule;
+        this.require.modules[path] = makeModule;
     }
 
     this.require.relative = function (parent) {
