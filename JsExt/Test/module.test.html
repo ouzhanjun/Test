@@ -25,14 +25,13 @@
     </ul>
 </body>
 <script>
-    var require=new jsDom.Module ();
-    require.register("./foo.js", function(module, exports, require){
-  module.exports = function(x) {
+    var m=new jsDom.Module ();
+    m.dependOnJsFile("../module.js");
+    m.register("./foo.js", function(x) {
     console.log(x);
-  };
-});
+  });
 
-var foo = require("./foo.js");
+var foo = m.require("./foo.js");
 foo("Hi");
 </script>
 
