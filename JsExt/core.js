@@ -1,4 +1,5 @@
 var Module = new Module();
+Module.init();
 
 // Define a local copy of jsDom
 var jsDom = function (selector, context) {

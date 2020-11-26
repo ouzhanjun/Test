@@ -32,7 +32,7 @@
         hasClass: function (elem, className) {
             var i = 0;
             var classes = this.getClassList(elem);
-            return className && classes.indexOf(className) != -1;
+            return className && elem && elem.nodeType === 1 && classes && classes.indexOf(className) != -1;
         },
         addClass: function (elems, value) {
             var elem,
@@ -79,28 +79,31 @@
                             curValues = curValues.replace(" " + className + " ", "");
                         }
                     }
-        
+
                     finalValue = jsDom.String.splitToArray(curValues).join(" ");
                     if (length !== finalValue.length)
                         setStrClasses(elem, finalValue);
                 }
             };
-        
+
             classes = jsDom.String.splitToArray(value);
             if (Array.isArray(elems)) {
                 while ((elem = elems[i++])) {
-                    removeElementClass(elem,classes);
+                    removeElementClass.call(this, elem, classes);
                 }
             }
             else {
-                removeElementClass(elems,classes);
+                removeElementClass.call(this, elems, classes);
             }
 
             return elems;
+        },
+        toggleClass: function (elems, stateVal) {
+
         }
 
     }
 
     Module.register("classes", classes);
 
-}) (Module);
+})(Module);

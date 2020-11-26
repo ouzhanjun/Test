@@ -10,8 +10,8 @@ var Module = function () {
     }
 
     this.modules = {}
-    var loadedJsFiles = {}
-    var initIsDone = false;
+    this.loadedJsFiles = {}
+    this.initIsDone = false;
 
     this.register = function (path, exportModule) {
         var makeModule = function (module, exports, require) {
@@ -38,24 +38,24 @@ var Module = function () {
     };
 
     this.init = function () {
-        if (initisDone)
+        if (this.initisDone)
             return;
         var elems = document.getElementsByTagName("script");
         for (var i in elems) {
             var match = /src="(.*)"/.exec(elems[i].outerHTML);
             var jsPath = match && match[1];
-            if (jsPath && !loadedJsFiles[jsPath]) {
-                loadedJsFiles[jsPath] = true;
+            if (jsPath && !this.loadedJsFiles[jsPath]) {
+                this.loadedJsFiles[jsPath] = true;
             }
         }
-        initIsDone = true;
+        this.initIsDone = true;
     }
 
     //dependOnJsFile('myScript.js',callback);
     this.dependOnJsFile = function (jsPath, callback) {
-        !initIsDone && this.init();
-        if (jsPath && !loadedJsFiles[jsPath]) {
-            loadedJsFiles[jsPath] = true;
+        !this.initIsDone && this.init();
+        if (jsPath && !this.loadedJsFiles[jsPath]) {
+            this.loadedJsFiles[jsPath] = true;
             var script = document.createElement('script'),
                 fn = callback || function () { };
             script.type = 'text/javascript';

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>菜鸟教程(runoob.com)</title>
+
+    <script src="../module/module.js"></script>
+    <script src="../core.js"></script>
+    <script src="../init.js"></script>
+    <script src="../string.js"></script>
+    <script src="../data/data.js"></script>
+    <script src="../attributes/classes.js"></script>
+</head>
+
+<body>
+
+    <h1></h1>
+    <button type="button">点击这里</button>
+    <p>锚部分为 #part5</p>
+    <button onclick="myFunction()">点我</button>
+    <p id="demo" class="cls1 cls2">demo</p>
+    <ul class="cls1 cls2 cls3">
+        <li>aa</li>
+        <li>bb</li>
+        <li>cc</li>
+    </ul>
+</body>
+<script>
+    var a=document.getElementById("demo");
+    var data=Module.require("data");
+    data.cache(a);
+    data.set(a,"abc","owen");
+    var val=data.get(a,"abc");
+    data.remove(a,"abc");
+    var val=data.get(a,"abc");
+</script>
+
+</html>
