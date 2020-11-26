@@ -1,9 +1,10 @@
-
+var Module = new Module();
 
 // Define a local copy of jsDom
 var jsDom = function (selector, context) {
 	return new jsDom.fn.init(selector, context);
 };
+
 jsDom.isArrayLike = function (obj) {
 
 	var length = !!obj && obj.length;

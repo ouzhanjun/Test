@@ -1,4 +1,4 @@
-jsDom.Module = function () {
+var Module = function () {
     this.require = function (path) {
         var mod = this.modules[path];
         if (!mod) throw new Error('failed to require "' + path + '"');
