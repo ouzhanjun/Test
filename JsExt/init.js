@@ -38,7 +38,7 @@ var rootJsDom,
             }
         } else if (selector.nodeType) {
 
-        } else if (jsDom.isFunction(selector)) {
+        } else if (typeof (selector) === "function") {
 
         }
     };

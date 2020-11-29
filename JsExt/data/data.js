@@ -1,17 +1,24 @@
 
-(function Data(Module) {
+(function Data(Module, $elem, $valid) {
     var EXPANDO = "__$data__";
+
     var data = {
         cache: function (owner) {
             var value = owner[EXPANDO];
             if (!value) {
                 value = Object.create(null);
-                Object.defineProperty(owner, EXPANDO, {
-                    value: value,
-                    configurable: true,
-                    enumerable: false,
-                    writable: true
-                });
+                if ($elem.acceptData(owner)) {
+                    if (owner.nodeType) {
+                        owner[EXPANDO] = value;
+                    } else {
+                        Object.defineProperty(owner, EXPANDO, {
+                            value: value,
+                            configurable: true,
+                            enumerable: false,
+                            writable: true
+                        });
+                    }
+                }
             }
             return value;
         },
@@ -55,7 +62,7 @@
                 }
             }
 
-            if (key === undefined || jsDom.isEmptyObject(cache)) {
+            if (key === undefined || $valid.isEmptyObject(cache)) {
                 if (owner.nodeType) {
                     owner[EXPANDO] = undefined;
                 }
@@ -66,10 +73,10 @@
         },
         hasData: function (owner) {
             var cache = owner[EXPANDO];
-            return cache !== undefined && !jQuery.isEmptyObject(cache);
+            return cache !== undefined && !$valid.isEmptyObject(cache);
         }
     }
 
     Module.register("data", data);
 
-})(Module);
+})(Module, Module.require("element"), Module.require("validate"));

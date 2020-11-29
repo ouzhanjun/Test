@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>菜鸟教程(runoob.com)</title>
+
+	<script src="../module/module.js"></script>
+	<script src="../var/regExpr.js"></script>
+	<script src="../var/validate.js"></script>
+	<script src="../var/element.js"></script>
+	<script src="../core/core.js"></script>
+
+</head>
+
+<body>
+
+	<h1></h1>
+	<button type="button">点击这里</button>
+	<p>锚部分为 #part5</p>
+	<button onclick="myFunction()">点我</button>
+	<p id="demo" class="cls1 cls2">demo</p>
+	<ul class="cls1 cls2 cls3">
+		<li>aa</li>
+		<li>bb</li>
+		<li>cc</li>
+	</ul>
+	<input type="text" id="i" value="abc">
+</body>
+<script>
+	var core = Module.require("core");
+	var c = new core();
+	c.length = 3;
+	c[0] = "A1";
+	c[1] = "A2";
+	c[2] = "A3";
+	var arr = c.toArray();
+	var e1 = c.eq(0);
+	var e2 = c.eq(1);
+	var e3 = c.eq(2);
+	var res = c.odd();
+	var even = c.even();
+	var g = c.get(2);
+	var cc = c.each(function (i, e) {
+		console.log(e);
+	});
+	var cc = c.map(function (i, e) {
+		console.log(i + " " + e);
+		return i + " " + e;
+	})
+	var aa=c.slice(0,2);
+	var first = c.first();
+	var last = c.last();
+</script>
+
+</html>
