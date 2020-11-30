@@ -99,7 +99,7 @@
             return elems;
         },
         toggleClass: function (elems, stateVal) {
-
+            
         }
 
     }
