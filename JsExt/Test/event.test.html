@@ -5,10 +5,14 @@
     <meta charset="utf-8">
     <title>菜鸟教程(runoob.com)</title>
 
+    <script src="../module/module.js"></script>
     <script src="../core.js"></script>
     <script src="../init.js"></script>
-    <script src="../data.js"></script>
-    <script src="../event.js"></script>
+    <script src="../string.js"></script>
+    <script src="../var/regExpr.js"></script>
+    <script src="../var/element.js"></script>
+    <script src="../data/data.js"></script>
+    <script src="../event/event.js"></script>
 </head>
 
 <body>
@@ -26,17 +30,9 @@
 </body>
 <script>
     var demo=document.getElementById("demo");
-    function dowork(e,o){
-        console.log(o.age);
-    }
-    var o={name:"name"};
-    var a = new EventHandler(dowork,o,{age:8},"L999");
-    //demo.onclick=function(e){a.execute(e)};
-    function f(e){
-        console.log(e);
-    }
-    jsDom.Event.bind(demo,"click",f,{name:"owen"});
-    jsDom.Event.unbind(demo,"click",f);
+    
+    var data=Module.require("event");
+    data.add(demo,"click",function(){console.log("a");});
 </script>
 
 </html>

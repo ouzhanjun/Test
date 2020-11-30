@@ -1,21 +1,13 @@
-(function Class(Module) {
-    var setStrClasses = function (elem, value) {
+(function Class(Module, $string, $data) {
+    var setClassName = function (elem, value) {
         if (elem.nodeType === 1)
             typeof elem.className !== "undefined" ? (elem.className = value) : (elem.setAttribute("class", value));
-    };
-
-    var appendClasses = function (elem, value) {
-        curClass = this.getClassName(elem);
-        value += " " + curClass;
-        var finalValue = jsDom.String.splitToArray(value).join(" ");
-        if (finalValue !== curClass) {
-            typeof elem.className !== "undefined" ? (elem.className = finalValue) : (elem.setAttribute("class", finalValue));
-        }
+        return elem;
     };
 
     var classes = {
 
-        getClassName: function (elem) {
+        getClass: function (elem) {
             return (elem.getAttribute && elem.getAttribute("class")) || elem.className || "";
         },
         getClassList: function (elem) {
@@ -24,8 +16,8 @@
                 result = Array.prototype.slice.call(result, 0, result.length)
             }
             else {
-                var classNames = this.getClassName(elem);
-                result = classNames ? jsDom.String.splitToArray(classNames) : [];
+                var classNames = this.getClass(elem);
+                result = classNames ? $string.splitToArray(classNames) : [];
             }
             return result;
         },
@@ -36,57 +28,65 @@
         },
         addClass: function (elems, value) {
             var elem,
-                curClass,
                 classNames = Array.isArray(value) ? value.join(" ") : value;
 
+            var appendClass = function (elem, value) {
+                curClass = this.getClass(elem);
+                value += " " + curClass;
+                var finalValue = $string.splitToArray(value).join(" ");
+                if (finalValue !== curClass) {
+                    typeof elem.className !== "undefined" ? (elem.className = finalValue) : (elem.setAttribute("class", finalValue));
+                }
+            };
             if (typeof classNames === "string") {
                 if (Array.isArray(elems)) {
                     for (var i in elems) {
                         if ((elem = elems[i]) && elem.nodeType === 1) {
-                            appendClasses(elem, classNames);
+                            appendClass.call(this, elem, classNames);
                         }
                     }
                 }
                 else {
-                    appendClasses(elems, classNames);
+                    appendClass.call(this, elems, classNames);
                 }
             }
 
             return elems;
         },
         setClass: function (elems, value) {
-            var finalValue = Array.isArray(value) ? (value.join(" ")) : jsDom.String.splitToArray(value).join(" ");
+            var finalValue = Array.isArray(value) ? (value.join(" ")) : $string.splitToArray(value).join(" ");
 
             if (Array.isArray(elems)) {
                 for (var i in elems) {
-                    setStrClasses(elems[i], finalValue);
+                    setClassName(elems[i], finalValue);
                 }
             }
             else {
-                setStrClasses(elems, finalValue);
+                setClassName(elems, finalValue);
             }
+            return elems;
         },
         removeClass: function (elems, value) {
             var classes, elem, curValues, className, j, finalValue, i = 0, length;
 
             var removeElementClass = function (elem, classes) {
                 if (elem.nodeType === 1) {
-                    curValues = " " + this.getClassName(elem) + " ";
+                    curValues = " " + this.getClass(elem) + " ";
                     length = curValues.length;
                     j = 0;
                     while ((className = classes[j++])) {
                         if ((curValues.indexOf(" " + className + " ")) >= 0) {
-                            curValues = curValues.replace(" " + className + " ", "");
+                            curValues = curValues.replace(" " + className + " ", " ");
                         }
                     }
 
-                    finalValue = jsDom.String.splitToArray(curValues).join(" ");
+                    finalValue = $string.splitToArray(curValues).join(" ");
                     if (length !== finalValue.length)
-                        setStrClasses(elem, finalValue);
+                        setClassName(elem, finalValue);
                 }
             };
 
-            classes = jsDom.String.splitToArray(value);
+            classes = $string.splitToArray(value);
             if (Array.isArray(elems)) {
                 while ((elem = elems[i++])) {
                     removeElementClass.call(this, elem, classes);
@@ -98,12 +98,59 @@
 
             return elems;
         },
-        toggleClass: function (elems, stateVal) {
-            
-        }
+        toggleClass: function (elems, value, stateVal) {
+            var type = typeof value,
+                className, i, classNames, elem,
+                isValidValue = type === "string" || Array.isArray(value);
+            var _toggleClass = function (elem, value, stateVal) {
+                if (isValidValue) {
+                    i = 0;
+                    classNames = $string.splitToArray(value);
 
+                    while (className = classNames[i++]) {
+                        if (this.hasClass(elem, className)) {
+                            this.removeClass(elem, className);
+                        } else {
+                            this.addClass(elem, className);
+                        }
+                    }
+                }
+                else if (value === undefined || type === "boolean") {
+                    className = this.getClass(elem);
+                    if (className) {
+                        $data.set(this, "__className__", className);
+                    }
+                    if (elem.setAttribute) {
+                        elem.setAttribute("class",
+                            className || value === false ?
+                                "" :
+                                $data.get(this, "__className__") || "");
+                    }
+                }
+            }
+
+            if (typeof stateVal === "boolean" && isValidValue) {
+                return stateVal ? this.addClass(elems, value) : this.removeClass(elems, value);
+            }
+
+            if (Array.isArray(elems)) {
+                for (var i = 0; i < elems.length; i++) {
+                    if (typeof value === "function") {
+                        this.toggleClass(elems, value.call(this, i, this.getClass(this)), stateVal);
+                    }
+                    else {
+                        elem = elems[i];
+                        _toggleClass.call(this, elem, value);
+                    }
+                }
+            }
+            else {
+                _toggleClass.call(this, elems, value);
+            }
+            return elems;
+        }
     }
 
     Module.register("classes", classes);
 
-})(Module);
+})(Module, Module.require("string"), Module.require("data"));

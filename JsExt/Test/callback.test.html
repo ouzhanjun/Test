@@ -5,10 +5,16 @@
     <meta charset="utf-8">
     <title>菜鸟教程(runoob.com)</title>
 
-    <script src="../core.js"></script>
-    <script src="../init.js"></script>
-    <script src="../string.js"></script>
-    <script src="../callbacks.js"></script>
+    <script src="../module/module.js"></script>
+    <script src="../core/regExpr.js"></script>
+    <script src="../core/string.js"></script>
+    <script src="../core/validate.js"></script>
+    <script src="../core/array.js"></script>
+    <script src="../var/element.js"></script>
+    <script src="../data/data.js"></script>
+    <script src="../core/core.js"></script>
+    <script src="../attributes/classes.js"></script>
+    <script src="../callback/callback.js"></script>
 </head>
 
 <body>
@@ -25,18 +31,30 @@
     </ul>
 </body>
 <script>
-    var callbacks = jsDom.callbacks('once');
+    function fn1(val){
+    console.log('fn1 says:' + val);
+}
+function fn2(val){
+    console.log('fn2 says ' + val);
+}
+var c = Module.require("callback");
+var cbs=new c();
+cbs.add(fn1);
+//fn1 says:foo
+cbs.fire('foo');
+cbs.add(fn2);
+//fn1 says:bar
+//fn2 says bar
+cbs.fire('bar');
 
-    callbacks.add(function() {
-    alert('a');
-    })
-
-    callbacks.add(function() {
-    alert('b');
-    })
-
-    callbacks.fire(); //输出结果: 'a' 'b'
-    callbacks.fire(); //未执行
+function fn1(val){
+    console.log('fn1 says ' + val);
+}
+var cbs = new c('once');
+cbs.add(fn1);
+//fn1 says foo 
+cbs.fire('foo');
+cbs.fire('foo');
 </script>
 
 </html>

@@ -6,9 +6,12 @@
     <title>菜鸟教程(runoob.com)</title>
 
     <script src="../module/module.js"></script>
-    <script src="../core.js"></script>
-    <script src="../init.js"></script>
-    <script src="../string.js"></script>
+    <script src="../core/regExpr.js"></script>
+    <script src="../core/string.js"></script>
+    <script src="../var/validate.js"></script>
+    <script src="../var/element.js"></script>
+    <script src="../data/data.js"></script>
+    <script src="../core/core.js"></script>
     <script src="../attributes/classes.js"></script>
 </head>
 
@@ -26,9 +29,16 @@
     </ul>
 </body>
 <script>
-    var a=document.getElementById("demo");
-    var classes=Module.require("classes");
-    classes.removeClass(a,"cls1");
+    var a = document.getElementById("demo");
+    var classes = Module.require("classes");
+    var b1 = classes.addClass(a, "cls3");
+    var b2 = classes.removeClass(a, "cls1");
+    var b3 = classes.getClassList(a);
+    var b4 = classes.getClass(a);
+    var b5 = classes.hasClass(a, "cls3");
+    var b6 = classes.setClass(a, "cls3");
+    var b7 = classes.toggleClass(a, "cls3");
+    var b8 = classes.toggleClass(a, "cls3");
 </script>
 
 </html>

@@ -1,47 +1,14 @@
-var Module = new Module();
-Module.init();
 
-// Define a local copy of jsDom
-var jsDom = function (selector, context) {
-	return new jsDom.fn.init(selector, context);
-};
 
-jsDom.isArrayLike = function (obj) {
+var validate= Module.require("validate");
 
-	var length = !!obj && obj.length;
+(function core(Module) {
+    var core = {
+        
+    }
+    Module.register("core", core);
+})(Module);
 
-	return Array.isArray(obj) || typeof length === "number" && length > 0 && (length - 1) in obj;
-}
-
-jsDom.isPlainObject = function (obj) {
-	var proto, Ctor;
-
-	if (!obj || toString.call(obj) !== "[object Object]") {
-		return false;
-	}
-
-	proto = Object.getPrototypeOf(obj);
-
-	if (!proto) {
-		return true;
-	}
-
-	Ctor = proto.hasOwnProperty("constructor") && proto.constructor;
-	return typeof Ctor === "function" && Ctor.toString() === Object.toString();
-}
-
-jsDom.isEmptyObject = function (obj) {
-	var name;
-
-	for (name in obj) {
-		return false;
-	}
-	return true;
-}
-
-jsDom.isFunction = function (fn) {
-	return typeof fn === "function" && typeof fn.nodeType !== "number";
-}
 
 //#region jsDom 对象定义
 jsDom.fn = jsDom.prototype = {
@@ -125,10 +92,10 @@ jsDom.extend = jsDom.fn.extend = function (target, src) {
 				continue;
 			}
 
-			if (jsDom.isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
+			if (validate.isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
 				if (isCopyArray && !Array.isArray(targetProp)) {
 					targetProp = [];
-				} else if (!isCopyArray && !jsDom.isPlainObject(targetProp)) {
+				} else if (!isCopyArray && !validate.isPlainObject(targetProp)) {
 					targetProp = {};
 				}
 				target[name] = extend(targetProp, srcValue);
@@ -173,7 +140,7 @@ jsDom.extend(jsDom, {
 		//如果是基本类型或者函数则可以直接赋值，如果是对象或数组则进行回归
 		var length, i = 0;
 
-		if (jsDom.isArrayLike(obj)) {
+		if (validate.isArrayLike(obj)) {
 			length = obj.length;
 			for (; i < length; i++) {
 				if (callback.call(obj[i], i, obj[i]) === false) {
@@ -207,10 +174,10 @@ jsDom.extend(jsDom, {
 					continue;
 				}
 
-				if (jsDom.isPlainObject(srcValue) || (isCopyArray = jsDom.isArray(srcValue))) {
-					if (isCopyArray && !isArray(targetProp)) {
+				if (validate.isPlainObject(srcValue) || (isCopyArray = Array.isArray(srcValue))) {
+					if (isCopyArray && !Array.isArray(targetProp)) {
 						targetProp = [];
-					} else if (!isCopyArray && !jsDom.isPlainObject(targetProp)) {
+					} else if (!isCopyArray && !validate.isPlainObject(targetProp)) {
 						targetProp = {};
 					}
 					target[name] = deepCopy(targetProp, srcValue);
