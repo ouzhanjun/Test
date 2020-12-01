@@ -1,7 +1,9 @@
 
 (function Array(Module, $valid, $regExpr) {
     var array = {
-        
+        contains: function (arr, item) {
+            return arr.indexOf(item) >= 0;
+        },
         flat: function (arr) {
             var results = [];
             if (arr.flat && typeof arr.flat === "function") {
@@ -10,7 +12,7 @@
             else {
                 var push = function (arr, res) {
                     if (Array.isArray(arr)) {
-                        var elems=arr;
+                        var elems = arr;
                         for (var i = 0; i < elems; i++) {
                             if (!Array.isArray(elems[i])) {
                                 results.push(elems[i]);
