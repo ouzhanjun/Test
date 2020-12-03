@@ -51,17 +51,21 @@
     }
 
     var _Promise = function (fn) {
+        if (!$valid.isFunction(fn)) {
+            return;
+        }
+
         var self = this;
         self.status = StatusCode.Pending;
         self.fulFilledCallbacks = new $Callback("once memory");
         self.rejectedCallbacks = new $Callback("once memory");
 
-        var _result = function (val) {
-            self.fulFilledCallbacks.fireWith.call(self, val);
+        var _resolve = function (val) {
+            self.fulFilledCallbacks.fireWith(self, val);
         }
 
         var _reject = function (val) {
-            self.rejectedCallbacks.fireWith.call(self, val);
+            self.rejectedCallbacks.fireWith(self, val);
         }
 
         this.resolve = function (val) {
@@ -74,6 +78,9 @@
                         }, function (reanson) {
                             _reject(reason);
                         })
+                    }
+                    else{
+                        _resolve(val);
                     }
                 }
             });
@@ -89,7 +96,7 @@
         }
 
         try {
-            $valid.isFunction(fn) && fn(self.resolve, self.reject);
+            fn(self.resolve, self.reject);
         }
         catch (reason) {
             this.reject(reason);
@@ -97,12 +104,12 @@
 
         this.then = function (onFulfilled, onRejected) {
             onFulfilled = $valid.isFunction(onFulfilled) ? onFulfilled : Identity;
-            onRejected = $valid.isfunction(onRejected) ? onRejected : Thrower;
+            onRejected = $valid.isFunction(onRejected) ? onRejected : Thrower;
 
             var nextPromise, self = this;
             switch (self.status) {
                 case StatusCode.fulfilled:
-                    nextPromise = new Promise(function (resolve, reject) {
+                    nextPromise = new _Promise(function (resolve, reject) {
                         timeOut(function () {
                             try {
                                 var result = this.fulFilledCallbacks.add(onFulfilled);
@@ -115,7 +122,7 @@
                     });
                     break;
                 case StatusCode.rejected:
-                    nextPromise = new Promise(function (resolve, reject) {
+                    nextPromise = new _Promise(function (resolve, reject) {
                         timeOut(function () {
                             try {
                                 var result = this.rejectedCallbacks.add(onRejected);
@@ -128,8 +135,8 @@
                     });
                     break;
                 case StatusCode.Pending:
-                    nextPromise = new Promise(function (resolve, reject) {
-                        self.fulfilledCallbacks.add(function (value) {
+                    nextPromise = new _Promise(function (resolve, reject) {
+                        self.fulFilledCallbacks.add(function (value) {
                             try {
                                 var result = onFulfilled(value);
                                 resolvePromise(nextPromise, result, resolve, reject);
@@ -195,27 +202,6 @@
         })
     }
 
-    _Promise.all = function (promises) {
-        return new _Promise(function (resolve, reject) {
-            var resolvedCounter = 0;
-            var promiseNum = promises.length;
-            var resolvedValues = new Array(promiseNum);
-            for (var i = 0; i < promiseNum; i++) {
-                (function (i) {
-                    Promise.resolve(promises[i]).then(function (value) {
-                        resolvedCounter++;
-                        resolvedValues[i] = value;
-                        if (resolvedCounter == promiseNum) {
-                            return resolve(resolvedValues);
-                        }
-                    }, function (reason) {
-                        return reject(reason);
-                    })
-                })(i)
-            }
-
-        }
-
     Module.register("promise", _Promise);
 
-    }) (Module, Module.require("validate"), Module.require("callback"));
+})(Module, Module.require("validate"), Module.require("callback"));

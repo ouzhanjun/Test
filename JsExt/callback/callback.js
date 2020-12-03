@@ -35,7 +35,7 @@
 
     var Callee = function (caller, data) {
         this.execute = function (callback) {
-            return callback.apply(caller, data);
+            return callback.call(caller, data);
         }
     }
 

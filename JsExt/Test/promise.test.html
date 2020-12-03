@@ -5,22 +5,31 @@
     <meta charset="utf-8">
     <title>菜鸟教程(runoob.com)</title>
 
-    <script src="../core.js"></script>
-    <script src="../init.js"></script>
-    <script src="../callbacks.js"></script>
-    <script src="../string.js"></script>
-    <script src="../promise.js"></script>
+    <script src="../module/module.js"></script>
+    <script src="../core/regExpr.js"></script>
+    <script src="../core/string.js"></script>
+    <script src="../core/validate.js"></script>
+    <script src="../core/array.js"></script>
+    <script src="../var/element.js"></script>
+    <script src="../data/data.js"></script>
+    <script src="../core/core.js"></script>
+    <script src="../attributes/classes.js"></script>
+    <script src="../callback/callback.js"></script>
+    <script src="../callback/promise.js"></script>
     <script>
-        var p1 = new jsDom.Promise(function (resolve) {
-            console.log("start 1");
-            resolve(5);
+        var pro=Module.require("promise");
+        var p=new pro(function(resolve,reject){
+            setTimeout(function(){
+                resolve('success');
+            },1000);
         });
-        p1.then(function(v){
-            console.log(v*10);
-            return v*10;
-        }).then(function(v){
-            console.log(v*10);
-            return v*10;
+
+        p.then(function(data){
+            console.log(data);
+        },function(err){
+            console.log(err);
+        }).then(function(data){
+            console.log(data);
         });
         
     </script>
