@@ -79,7 +79,7 @@
                             _reject(reason);
                         })
                     }
-                    else{
+                    else {
                         _resolve(val);
                     }
                 }
@@ -190,10 +190,45 @@
         }
     }
 
+    _Promise.resolve = function (value) {
+        if (value instanceof _Promise) {
+            return value;
+        }
+        return new _Promise(function (resolve) {
+            resolve(value);
+        });
+    }
+
+    _Promise.reject = function (value) {
+        return new _Promise(function (resolve, reject) {
+            reject(value);
+        });
+    }
+
+    _Promise.all = function (promises) {
+        return new _Promise(function (resolve, reject) {
+            var results = [];
+            var length = promises.length;
+            for (var i = 0; i < promises.length; i++) {
+                var promise = promises[i];
+                _Promise.resolve(promise).then(
+                    function (res) {
+                        results.push (res) ;
+                        if (results.length === length) {
+                            resolve(results);
+                        }
+                    }, function (err) {
+                        reject(err);
+                    }
+                );
+            }
+        })
+    }
+
     _Promise.race = function (promises) {
         return new _Promise(function (resolve, reject) {
             for (var i = 0; i < promises.length; i++) {
-                this.resolve(promises[i]).then(function (value) {
+                _Promise.resolve(promises[i]).then(function (value) {
                     return resolve(value);
                 }, function (reason) {
                     return reject(reason);

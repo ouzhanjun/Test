@@ -35,7 +35,7 @@
 
     var Callee = function (caller, data) {
         this.execute = function (callback) {
-            return callback.call(caller, data);
+            return callback.apply(caller, data);
         }
     }
 
@@ -163,7 +163,7 @@
                     return !!locked;
                 },
                 fireWith: function (context, args) {
-                    args = args || [];
+                    args = args && [args];
                     args = new Callee(context, args);
                     queue.push(args);
                     if (!firing) {
