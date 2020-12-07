@@ -209,11 +209,10 @@
         return new _Promise(function (resolve, reject) {
             var results = [];
             var length = promises.length;
-            for (var i = 0; i < promises.length; i++) {
-                var promise = promises[i];
+            var putRes = function (promise, i, results) {
                 _Promise.resolve(promise).then(
                     function (res) {
-                        results.push (res) ;
+                        results[i] = (res);
                         if (results.length === length) {
                             resolve(results);
                         }
@@ -221,6 +220,10 @@
                         reject(err);
                     }
                 );
+            }
+            for (var i = 0; i < promises.length; i++) {
+                var promise = promises[i];
+                putRes(promise, i, results);
             }
         })
     }

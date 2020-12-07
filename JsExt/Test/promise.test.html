@@ -20,7 +20,7 @@
 
 var Promise1 = Module.require("promise");
 var p1 = Promise1.resolve('a');
- var p2 = Promise1.resolve('b');
+ var p2 = Promise1.resolve('b1');
  var p3 = Promise1.resolve('c');
  Promise1.all([p1,p2,p3]).then(function(value) {
     console.log(value);
