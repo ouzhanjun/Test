@@ -1,6 +1,8 @@
 (function Deferred(Module, $promise) {
     function deferred() {
-        
+        this.when = function(){
+
+        }
     }
 
 
