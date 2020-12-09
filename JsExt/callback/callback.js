@@ -163,11 +163,13 @@
                     return !!locked;
                 },
                 fireWith: function (context, args) {
-                    args = args && [args];
-                    args = new Callee(context, args);
-                    queue.push(args);
-                    if (!firing) {
-                        fire();
+                    if (!locked) {
+                        args = args || [];
+                        args = new Callee(context, args);
+                        queue.push(args);
+                        if (!firing) {
+                            fire();
+                        }
                     }
                     return this;
                 },

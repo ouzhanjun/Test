@@ -60,12 +60,12 @@
         self.fulFilledCallbacks = new $callback("once memory");
         self.rejectedCallbacks = new $callback("once memory");
 
-        var _resolve = function (val) {
-            self.fulFilledCallbacks.fireWith(self, val);
+        var _resolve = function () {
+            self.fulFilledCallbacks.fireWith(self, arguments);
         }
 
-        var _reject = function (val) {
-            self.rejectedCallbacks.fireWith(self, val);
+        var _reject = function () {
+            self.rejectedCallbacks.fireWith(self, arguments);
         }
 
         this.resolve = function (val) {

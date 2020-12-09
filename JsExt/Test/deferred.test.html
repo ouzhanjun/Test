@@ -21,7 +21,7 @@
 
 var Deferred = Module.require("deferred");
 var deferred=new Deferred();
-/* deferred.done(function(n){
+ deferred.done(function(n){
     console.log(n+" done1");
 });
 deferred.done(function(n){
@@ -29,12 +29,7 @@ deferred.done(function(n){
 });
 deferred.resolve("ss");
 deferred.resolve('a1');
- */
-console.log(deferred.state());
-deferred.fail(function(n){
-    console.log(n+" done2");
-});
-deferred.reject('b');
+ 
     </script>
 
 </head>
