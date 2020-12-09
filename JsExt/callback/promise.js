@@ -1,4 +1,4 @@
-(function Promise(Module, $valid, $Callback) {
+(function Promise(Module, $valid, $callback) {
     function resolvePromise(promise, result, resolve, reject) {
         var then;
         var thenCalledOrThrow = false;
@@ -57,8 +57,8 @@
 
         var self = this;
         self.status = StatusCode.Pending;
-        self.fulFilledCallbacks = new $Callback("once memory");
-        self.rejectedCallbacks = new $Callback("once memory");
+        self.fulFilledCallbacks = new $callback("once memory");
+        self.rejectedCallbacks = new $callback("once memory");
 
         var _resolve = function (val) {
             self.fulFilledCallbacks.fireWith(self, val);
