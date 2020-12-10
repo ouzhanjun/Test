@@ -53,40 +53,14 @@
             this.then(null, fn);
         }
 
-        this.then = function (onFulfilled, onRejected, onProgress) {
+        this.then = function (onFulFilled, onRejected, onProgress) {
             //避免同时调用，只有最先到达的有效
             var maxDepth = 0;
 
-            function resolve(depth, deferred, handler) {
-                return function () {
-                    var that = this,
-                        args = arguments,
-                        migthThrow = function () {
-                            var returned, then;
-                            if (depth < maxDepth) {
-                                return;
-                            }
-
-                            returned = handler.apply(that, args);
-                            if (returned === this) {
-                                throw new TypeError('Chaining cycle detected!');
-                            }
-
-                            then = returned && (typeof returned === "object") && returned.then;
-
-                            if (typeof then === "function") {
-                                maxDepth++;
-                                then.call(returned,
-                                    resolve(maxDepth, deferred,));
-                            }
-                        },
-                        process = function () {
-
-                        }
-                };
-
+            function resolve(depth, deferred, fulhandler, rejhandler, notifyhandler) {
 
             }
+            
         }
 
         if (func && $valid.isFunction(func)) {
