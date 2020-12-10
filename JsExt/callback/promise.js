@@ -1,37 +1,4 @@
 (function Promise(Module, $valid, $callback) {
-    function resolvePromise(promise, result, resolve, reject) {
-        var then;
-        var thenCalledOrThrow = false;
-
-        if (promise === result) {
-            return reject(new TypeError('Chaining cycle detected for promise!'))
-        }
-
-        if ((result !== null) && ((typeof result === 'object') || (typeof result === 'function'))) {
-            try {
-                then = result.then;
-                if ($valid.isFunction(then)) {
-                    then.call(result, function rs(value) {
-                        if (thenCalledOrThrow) return;
-                        thenCalledOrThrow = true;
-                        return resolvePromise(promise, value, resolve, reject);
-                    }, function rj(reason) {
-                        if (thenCalledOrThrow) return;
-                        thenCalledOrThrow = true;
-                        return reject(reason);
-                    });
-                } else {
-                    return resolve(result);
-                }
-            } catch (reason) {
-                if (thenCalledOrThrow) return;
-                thenCalledOrThrow = true;
-                return reject(reason);
-            }
-        } else {
-            return resolve(result);
-        }
-    }
 
     var StatusCode = {
         Pending: "pending",     //待定,可能会转换为已实现或已拒绝状态
@@ -105,6 +72,44 @@
         this.then = function (onFulfilled, onRejected) {
             onFulfilled = $valid.isFunction(onFulfilled) ? onFulfilled : Identity;
             onRejected = $valid.isFunction(onRejected) ? onRejected : Thrower;
+
+
+            //如果同时调用resolvePromise和rejectPromise，或者对同一参数进行了多次调用，则第一个调用优先，而所有其他调用均被忽略
+            function resolvePromise(promise, result, resolve, reject) {
+                var then;
+                // Support: Promises/A+ section 2.3.3.3.3 https://promisesaplus.com/#point-59
+                // Ignore double-resolution attempts
+                var thenCalledOrThrow = false;
+
+                if (promise === result) {
+                    return reject(new TypeError('Chaining cycle detected!'));
+                }
+
+                if ((result !== null) && ((typeof result === 'object') || (typeof result === 'function'))) {
+                    try {
+                        then = result.then;
+                        if ($valid.isFunction(then)) {
+                            then.call(result, function rs(value) {
+                                if (thenCalledOrThrow) return;
+                                thenCalledOrThrow = true;
+                                return resolvePromise(promise, value, resolve, reject);
+                            }, function rj(reason) {
+                                if (thenCalledOrThrow) return;
+                                thenCalledOrThrow = true;
+                                return reject(reason);
+                            });
+                        } else {
+                            return resolve(result);
+                        }
+                    } catch (reason) {
+                        if (thenCalledOrThrow) return;
+                        thenCalledOrThrow = true;
+                        return reject(reason);
+                    }
+                } else {
+                    return resolve(result);
+                }
+            }
 
             var nextPromise, self = this;
             switch (self.status) {

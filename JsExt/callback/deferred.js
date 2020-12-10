@@ -6,6 +6,13 @@
         rejected: "rejected"    //当被拒绝时,不得过渡到任何其他状态,必须有一个理由，不能改变
     }
 
+    function Identity(v) {
+        return v;
+    }
+    function Thrower(ex) {
+        throw ex;
+    }
+
     function deferred(func) {
         var state = StatusCode.Pending;
         var fulFilledCallbacks = new $callback("once memory");
@@ -46,14 +53,40 @@
             this.then(null, fn);
         }
 
-        this.then = function (onFulfilled, onRejected) {
-            var that = this;
-            return new deferred(function (newDefer) {
-                that.done(function(){
-                    var returned = onFulfilled && onFulfilled.apply(this,arguments);
-                    if(returned && $valid.isFunction())
-                });
-            });
+        this.then = function (onFulfilled, onRejected, onProgress) {
+            //避免同时调用，只有最先到达的有效
+            var maxDepth = 0;
+
+            function resolve(depth, deferred, handler) {
+                return function () {
+                    var that = this,
+                        args = arguments,
+                        migthThrow = function () {
+                            var returned, then;
+                            if (depth < maxDepth) {
+                                return;
+                            }
+
+                            returned = handler.apply(that, args);
+                            if (returned === this) {
+                                throw new TypeError('Chaining cycle detected!');
+                            }
+
+                            then = returned && (typeof returned === "object") && returned.then;
+
+                            if (typeof then === "function") {
+                                maxDepth++;
+                                then.call(returned,
+                                    resolve(maxDepth, deferred,));
+                            }
+                        },
+                        process = function () {
+
+                        }
+                };
+
+
+            }
         }
 
         if (func && $valid.isFunction(func)) {
