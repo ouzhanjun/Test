@@ -13,22 +13,32 @@
         throw ex;
     }
 
-    function deferred(func) {
+    function Deferred(func) {
+
         var state = StatusCode.Pending;
+
         var fulFilledCallbacks = new $callback("once memory");
         var rejectedCallbacks = new $callback("once memory");
+        var notifyCallbacks = new $callback("memory");
 
         this.done = fulFilledCallbacks.add;
         this.fail = rejectedCallbacks.add;
+        this.notify = notifyCallbacks.add;
 
         this.resolveWith = fulFilledCallbacks.fireWith;
         this.rejectWith = rejectedCallbacks.fireWith;
+        this.notifyWith = notifyCallbacks.fireWith;
+
+        this.state = function () {
+            return state;
+        }
 
         this.resolve = function () {
             if (state === StatusCode.Pending) {
                 state = StatusCode.fulfilled;
             }
             rejectedCallbacks.disable();
+            notifyCallbacks.lock();
             this.resolveWith(this, arguments);
         }
 
@@ -37,11 +47,8 @@
                 state = StatusCode.rejected;
             }
             fulFilledCallbacks.disable();
+            notifyCallbacks.lock();
             this.rejectWith(this, arguments);
-        }
-
-        this.state = function () {
-            return state;
         }
 
         this.always = function () {
@@ -49,18 +56,94 @@
             return this;
         }
 
-        this.catch = function (fn) {
-            this.then(null, fn);
-        }
-
         this.then = function (onFulFilled, onRejected, onProgress) {
             //避免同时调用，只有最先到达的有效
             var maxDepth = 0;
 
-            function resolve(depth, deferred, fulhandler, rejhandler, notifyhandler) {
+            function resolve(depth, deferred, handler, special) {
+                var that = this,
+                    args = arguments,
+                    mightThrow = function () {
+                        var returned, then;
 
-            }
-            
+                        if (depth < maxDepth) {
+                            return;
+                        }
+
+                        returned = handler.apply(that, args);
+
+                        if (returned === this) {
+                            throw new TypeError("Thenable self");
+                        }
+
+                        then = returned &&
+                            (typeof returned === "object" ||
+                                $valid.isFunction(returned)) &&
+                            returned.then;
+
+                        if ($valid.isFunction(then)) {
+                            if (special) {
+                                then.call(
+                                    returned,
+                                    resolve(maxDepth, deferred, Identity, special),
+                                    resolve(maxDepth, deferred, Thrower, special));
+                            }
+                            else {
+                                maxDepth++;
+                                then.call(returned,
+                                    resolve(maxDepth, deferred, Identity, special),
+                                    resolve(maxDepth, deferred, Thrower, special),
+                                    resolve(maxDepth, deferred, Identity, deferred.notifyWith)
+                                );
+                            }
+                        }
+                        else {
+                            if (handler !== Identity) {
+                                that = undefined;
+                                args = [returned];
+                            }
+                            (special || deferred.resolveWith)(that, args);
+                        }
+                    },
+                    process = special ?
+                        mightThrow :
+                        function () {
+                            try {
+                                mightThrow();
+                            }
+                            catch (e) {
+                                if (depth + 1 >= maxDepth) {
+                                    if (handler !== maxDepth) {
+                                        that = undefined;
+                                        args = [e];
+                                    }
+
+                                    deferred.rejectWith(that, args);
+                                }
+                            }
+                        };
+
+                if (depth) {
+                    process();
+                }
+                else {
+                    window.setTimeout(process);
+                }
+            };
+
+            return new Deferred(function (newDefer) {
+                fulFilledCallbacks.add(
+                    resolve(0,
+                        newDefer,
+                        $valid.isFunction(onProgress) ? onProgress : Identity, newDefer.notifyWith)
+                );
+                rejectedCallbacks.add();
+                notifyCallbacks.add();
+            });
+        }
+
+        this.catch = function (fn) {
+            then(null, fn);
         }
 
         if (func && $valid.isFunction(func)) {
@@ -71,6 +154,6 @@
     }
 
 
-    Module.register("deferred", deferred);
+    Module.register("deferred", Deferred);
 
 })(Module, Module.require("promise"), Module.require("callback"), Module.require("validate"));
