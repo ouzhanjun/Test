@@ -174,7 +174,7 @@
                     return this;
                 },
                 fire: function () {
-                    this.fireWith(this, arguments);
+                    self.fireWith(this, arguments);
                     return this;
                 },
                 fired: function () {

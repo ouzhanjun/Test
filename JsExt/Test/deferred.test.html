@@ -18,8 +18,20 @@
     <script src="../callback/promise.js"></script>
     <script src="../callback/deferred.js"></script>
     <script>
+/* var Deferred = Module.require("deferred");
+var defer=new Deferred();
 
-var Deferred = Module.require("deferred");
+defer.done(function(a,b){
+            return a * b;
+}).done(function( result ) {
+            console.log("result = " + result);
+}).then(function( a, b ) {
+            return a * b;
+}).done(function( result ) {
+            console.log("result = " + result);
+});
+defer.resolve( 2, 3 ); */
+ var Deferred = Module.require("deferred");
 var deferred=new Deferred();
  deferred.done(function(n){
     console.log(n+" done1");
@@ -28,7 +40,7 @@ deferred.done(function(n){
     console.log(n+" done2");
 });
 deferred.resolve("ss");
-deferred.resolve('a1');
+deferred.resolve('a1'); 
  
     </script>
 
