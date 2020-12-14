@@ -1,5 +1,4 @@
 
-
 var validate= Module.require("validate");
 
 (function core(Module) {
@@ -8,7 +7,6 @@ var validate= Module.require("validate");
     }
     Module.register("core", core);
 })(Module);
-
 
 //#region jsDom 对象定义
 jsDom.fn = jsDom.prototype = {

@@ -1,6 +1,5 @@
 
-
-(function Core(Module, $elem, $valid) {
+(function Core(Module, $elem) {
 
     var Core = function () {
         this.length = 0;
@@ -86,4 +85,4 @@
 
     Module.register("core", Core);
 
-})(Module, Module.require("element"), Module.require("validate"));
+})(Module, Module.require("element"));

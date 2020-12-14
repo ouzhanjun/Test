@@ -1,5 +1,5 @@
 
-(function element(Module, $valid, $regExpr) {
+(function element(Module, $valid) {
     var element = {
         acceptData: function (owner) {
             return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
@@ -112,7 +112,7 @@
             else {
                 var push = function (elem, res) {
                     if (Array.isArray(elem)) {
-                        var elems=elem;
+                        var elems = elem;
                         for (var i = 0; i < elems; i++) {
                             if (!Array.isArray(elems[i])) {
                                 results.push(elems[i]);
@@ -159,4 +159,4 @@
     }
     Module.register("element", element);
 
-})(Module, Module.require("validate"), Module.require("regExpr"));
+})(Module, Module.require("validate"));
