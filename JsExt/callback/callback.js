@@ -90,6 +90,7 @@
                 }
             },
             self = {
+                id: Math.random(),
                 has: function (callback) {
                     return callback ? list.indexOf(callback) >= 0 : list.length > 0;
                 },

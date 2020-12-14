@@ -1,4 +1,4 @@
-(function Deferred(Module, $promise, $callback, $valid, $core) {
+(function Deferred(Module, $callback, $valid) {
 
     this.StatusCode = {
         Pending: "pending",     //待定,可能会转换为已实现或已拒绝状态
@@ -9,6 +9,7 @@
     function Identity(v) {
         return v;
     }
+
     function Thrower(ex) {
         throw ex;
     }
@@ -17,17 +18,36 @@
 
         var state = StatusCode.Pending;
 
-        var fulFilledCallbacks = fulFilledFuns = new $callback("once memory");
-        var rejectedCallbacks = rejectedFuns = new $callback("once memory");
-        var notifyCallbacks = notifyFuns = new $callback("memory");
+        var fulFilledCallbacks = new $callback("once memory"),
+            rejectedCallbacks = new $callback("once memory"),
+            notifyCallbacks = new $callback("memory"),
+            fulFilledFuns = new $callback("once memory"),
+            rejectedFuns = new $callback("once memory"),
+            notifyFuns = new $callback("memory");
 
-        this.done = fulFilledFuns.add;
-        this.fail = rejectedFuns.add;
-        this.notify = notifyFuns.add;
+        this.done = fulFilledCallbacks.add;
+        this.fail = rejectedCallbacks.add;
+        this.notify = notifyCallbacks.add;
 
-        this.resolveWith = fulFilledFuns.fireWith;
-        this.rejectWith = rejectedFuns.fireWith;
-        this.notifyWith = notifyFuns.fireWith;
+        this.resolveWith = fulFilledCallbacks.fireWith;
+        this.rejectWith = rejectedCallbacks.fireWith;
+        this.notifyWith = notifyCallbacks.fireWith;
+
+        fulFilledCallbacks.add(
+            rejectedCallbacks.disable,
+            rejectedFuns.disable,
+            notifyCallbacks.lock,
+            notifyFuns.lock,
+            fulFilledFuns.fire);
+
+        rejectedCallbacks.add(
+            fulFilledCallbacks.disable,
+            fulFilledFuns.disable,
+            notifyCallbacks.lock,
+            notifyFuns.lock,
+            rejectedFuns.fire);
+
+        notifyCallbacks.add(notifyFuns.fire);
 
         this.state = function () {
             return state;
@@ -46,11 +66,6 @@
             if (state === StatusCode.Pending) {
                 state = StatusCode.fulfilled;
             }
-            rejectedCallbacks.disable();
-            rejectedFuns.disable();
-            notifyCallbacks.lock();
-            notifyFuns.lock();
-            fulFilledCallbacks.add(fulFilledFuns.fire);
             this.resolveWith(this, arguments);
         }
 
@@ -58,17 +73,11 @@
             if (state === StatusCode.Pending) {
                 state = StatusCode.rejected;
             }
-            fulFilledCallbacks.disable();
-            fulFilledFuns.disable();
-            notifyCallbacks.lock();
-            notifyFuns.lock();
-            rejectedCallbacks.add(rejectedFuns.fire);
-            this.rejectWith(undefined, arguments);
+            this.rejectWith(this, arguments);
         }
 
         this.notify = function () {
-            rejectedCallbacks.add(notifyFuns.fire);
-            this.notifyWith(undefined, arguments);
+            this.notifyWith(this, arguments);
         }
 
         this.then = function (onFulFilled, onRejected, onProgress) {
@@ -175,4 +184,4 @@
 
     Module.register("deferred", Deferred);
 
-})(Module, Module.require("promise"), Module.require("callback"), Module.require("validate"), Module.require("core"));
+})(Module, Module.require("callback"), Module.require("validate"));
