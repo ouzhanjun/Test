@@ -1,4 +1,4 @@
-(function Event(Module, $data, $elem, $regExpr) {
+(function Event(Module, $core, $data, $elem, $regExpr, $valid) {
     var rtypenamespace = /^([^.]*)(?:\.(.+)|)/;
 
     var eventTypes = {
@@ -29,23 +29,21 @@
         }
 
         if (props) {
-            
+
         }
     };
 
     var event = {
         add: function (elem, eventTypes, handler, data) {
+
             var handleObjIn, eventHandle, tmp,
                 events, t, namespaces, origType,
                 elemData = $data.get(elem);
-
-            if ($elem.acceptData(elem)) {
+            if (!$valid.isFunction(handler))
                 return;
-            }
 
-            if (handler.handler) {
-                handleObjIn = handler;
-                handler = handleObjIn.handler;
+            if (!handler.guid) {
+                handler.guid = $core.guid;
             }
 
             if (!(events = elemData.events)) {
@@ -81,4 +79,4 @@
     }
     Module.register("event", { event, Event });
 }
-)(Module, Module.require("data"), Module.require("element"), Module.require("regExpr"));
+)(Module, Module.require("core"), Module.require("data"), Module.require("element"), Module.require("regExpr"), Module.require("validate"));

@@ -3,6 +3,7 @@
 
     var Core = function () {
         this.length = 0;
+        this.guid=1;
         this.toArray = function () {
             return $elem.toArray(this);
         }
