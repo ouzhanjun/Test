@@ -33,12 +33,30 @@
         }
     };
 
-    var event = {
-        add: function (elem, eventTypes, handler, data) {
+    var special = {
+        load: {
+            // 防止 image.load 触发冒泡到 window.load
+            noBubble: true
+        },
+        click: {
+            setup:function(data){
+                var el= this||data;
+                if(el.type && $regExpr.rcheckableType.test(el.type)
+                && el.click && $valid.nodeName(el,"input")){
+                    
+                }
+            }
+        },
+        beforeunload: {}
+    };
 
-            var handleObjIn, eventHandle, tmp,
-                events, t, namespaces, origType,
+    var event = {
+        add: function (elem, types, handler, data) {
+
+            var handleObj, eventHandle, tmp,
+                events, t, namespaces, origType, handlers,
                 elemData = $data.get(elem);
+
             if (!$valid.isFunction(handler))
                 return;
 
@@ -49,27 +67,42 @@
             if (!(events = elemData.events)) {
                 events = elemData.events = Object.create(null);
             }
+
             if (!(eventHandle = elemData.handle)) {
                 eventHandle = elemData.handle = function (e) {
                     //dispatch events
                 };
             }
-            eventTypes = (eventTypes || "").match($regExpr.rnothtmlwhite) || [""];
-            t = eventTypes.length;
+
+            types = (types || "").match($regExpr.rnothtmlwhite) || [""];
+            t = types.length;
 
             while (t--) {
                 //["click.ns.ns1", "click", "ns.ns1", index: 0, input: "click.ns.ns1", groups: undefined]
                 tmp = rtypenamespace.exec(types[t]) || [];
                 type = origType = tmp[1];
-                namespaces = (tmp[2] || "").split(".").sort();
+                namespaces = (tmp[2] || "").split(".");
 
                 if (!type) {
                     continue;
                 }
 
-                //如果是focusin,focusout,就应该转成
-                handleObjIn.type = type;
 
+
+                //如果是focusin,focusout,就应该转成
+                handleObj.type = {
+                    type: type,  //经过转换的类型
+                    origType: origType,
+                    data: data,
+                    handler: handler,
+                    guid: handler.guid,
+                    namespaces: namespaces.join('.')
+                };
+
+                if (!(handlers = events[type])) {
+                    events[type] = handlers = [];
+
+                }
             }
         },
         dispatch: function (nativeEvent) {

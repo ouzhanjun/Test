@@ -38,9 +38,13 @@
                 docElem = (elem.ownerDocument || elem).documentElement;
 
             return !$regExpr.rhtmlSuffix.test(namespace || docElem && docElem.nodeName || "HTML");
+        },
+        nodeName: function (elem, name) {
+            return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
+
         }
     }
-    
+
     Module.register("validate", validate);
 
 })(Module, Module.require("regExpr"));
