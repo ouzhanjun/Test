@@ -33,27 +33,56 @@
         }
     };
 
-    var special = {
+    var specialEvents = {
         load: {
             // 防止 image.load 触发冒泡到 window.load
             noBubble: true
         },
         click: {
-            setup:function(data){
-                var el= this||data;
-                if(el.type && $regExpr.rcheckableType.test(el.type)
-                && el.click && $valid.nodeName(el,"input")){
-                    
+            setup: function (data) {
+                var el = this || data;
+                if (el.type && $regExpr.rcheckableType.test(el.type)
+                    && el.click && $valid.nodeName(el, "input")) {
+
                 }
             }
         },
         beforeunload: {}
     };
 
+    var bindEvent = {
+        detach: function (target, eventType, fn) {
+            if (typeof eventType !== "string") {
+                return;
+            }
+            eventType = eventType.toLowerCase();
+            if (target.removeEventListener) {
+                target.removeEventListener(eventType, fn);
+            } else if (target.detachEvent) {
+                target.detachEvent('on' + eventType, fn);
+            } else {
+                target['on' + eventType] = null;
+            }
+        },
+        attach: function (target, eventType, fn) {
+            if (typeof eventType !== "string") {
+                return;
+            }
+            eventType = eventType.toLowerCase();
+            if (target.addEventListener) {
+                target.addEventListener(eventType, fn);
+            } else if (target.attachEvent) {
+                target.attachEvent('on' + eventType, fn);
+            } else {
+                target['on' + eventType] = fn;
+            }
+        }
+    }
+
     var event = {
         add: function (elem, types, handler, data) {
 
-            var handleObj, eventHandle, tmp,
+            var handleObj, eventHandle, tmp, special,
                 events, t, namespaces, origType, handlers,
                 elemData = $data.get(elem);
 
@@ -87,7 +116,7 @@
                     continue;
                 }
 
-
+                type = (special = specialEvents[type]) ? special.bindType : type;
 
                 //如果是focusin,focusout,就应该转成
                 handleObj.type = {
@@ -102,14 +131,33 @@
                 if (!(handlers = events[type])) {
                     events[type] = handlers = [];
 
+                    if (special) {
+
+                    }
+                    else {
+                        bindEvent.attach(elem, type, eventHandle);
+                    }
                 }
+
+                handlers.push(handleObj);
             }
         },
         dispatch: function (nativeEvent) {
-            var args = new Array[arguments.length];
+            var i, j, special,
+                events = $data.get(this, "events"),
+                args = new Array[arguments.length],
+                e = event.fix(nativeEvent),
+                handlers = events[e.type] || [],
+                special = specialEvents[e.type] || {};
 
+            args[0] = event;
+            
+        },
+        fix: function (orgEvent) {
+            return orgEvent && orgEvent instanceof Event ? orgEvent : new Event(orgEvent);
         }
     }
+
     Module.register("event", { event, Event });
 }
 )(Module, Module.require("core"), Module.require("data"), Module.require("element"), Module.require("regExpr"), Module.require("validate"));
