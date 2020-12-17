@@ -34,21 +34,15 @@
     };
 
     var specialEvents = {
-        load: {
-            // 防止 image.load 触发冒泡到 window.load
-            noBubble: true
-        },
-        click: {
-            setup: function (data) {
-                var el = this || data;
-                if (el.type && $regExpr.rcheckableType.test(el.type)
-                    && el.click && $valid.nodeName(el, "input")) {
-
-                }
-            }
-        },
-        beforeunload: {}
+        focusin: { bindType: "focus" },
+        focusout: { bindType: "blur" },
+        mouseenter: { bindType: "mouseover" },
+        mouseleave: { bindType: "mouseout" },
+        pointerenter: { bindType: "pointerover" },
+        pointerleave: { bindType: "pointerout" }
     };
+
+    var detachFun, attachFuc;
 
     var bindEvent = {
         detach: function (target, eventType, fn) {
@@ -56,26 +50,45 @@
                 return;
             }
             eventType = eventType.toLowerCase();
-            if (target.removeEventListener) {
-                target.removeEventListener(eventType, fn);
-            } else if (target.detachEvent) {
-                target.detachEvent('on' + eventType, fn);
-            } else {
-                target['on' + eventType] = null;
+            if (!detachFun) {
+                if (target.removeEventListener) {
+                    detachFun = function (eventType, fn) {
+                        this.removeEventListener(eventType, fn);
+                    }
+                } else if (target.detachEvent) {
+                    detachFun = function (eventType, fn) {
+                        this.detachEvent('on' + eventType, fn);
+                    }
+                } else {
+                    detachFun = function (eventType) {
+                        this['on' + eventType] = null;
+                    }
+                }
             }
+            detachFun.call(target, eventType, fn);
         },
         attach: function (target, eventType, fn) {
             if (typeof eventType !== "string") {
                 return;
             }
             eventType = eventType.toLowerCase();
-            if (target.addEventListener) {
-                target.addEventListener(eventType, fn);
-            } else if (target.attachEvent) {
-                target.attachEvent('on' + eventType, fn);
-            } else {
-                target['on' + eventType] = fn;
+            
+            if (!attachFuc) {
+                if (target.addEventListener) {
+                    attachFuc = function (eventType, fn) {
+                        this.addEventListener(eventType, fn);
+                    }
+                } else if (target.attachEvent) {
+                    attachFuc = function (eventType, fn) {
+                        this.attachEvent('on' + eventType, fn);
+                    }
+                } else {
+                    attachFuc = function (eventType, fn) {
+                        this['on' + eventType] = fn;
+                    }
+                }
             }
+            attachFuc.call(target, eventType, fn);
         }
     }
 
@@ -151,7 +164,7 @@
                 special = specialEvents[e.type] || {};
 
             args[0] = event;
-            
+
         },
         fix: function (orgEvent) {
             return orgEvent && orgEvent instanceof Event ? orgEvent : new Event(orgEvent);
