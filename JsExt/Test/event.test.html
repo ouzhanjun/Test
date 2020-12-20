@@ -6,12 +6,16 @@
     <title>菜鸟教程(runoob.com)</title>
 
     <script src="../module/module.js"></script>
-    <script src="../core.js"></script>
-    <script src="../init.js"></script>
-    <script src="../string.js"></script>
-    <script src="../var/regExpr.js"></script>
+    <script src="../core/regExpr.js"></script>
+    <script src="../core/string.js"></script>
+    <script src="../core/validate.js"></script>
+    <script src="../core/array.js"></script>
     <script src="../var/element.js"></script>
     <script src="../data/data.js"></script>
+    <script src="../core/core.js"></script>
+    <script src="../attributes/classes.js"></script>
+    <script src="../callback/callback.js"></script>
+    <script src="../callback/promise.js"></script>
     <script src="../event/event.js"></script>
 </head>
 
@@ -32,7 +36,8 @@
     var demo=document.getElementById("demo");
     
     var data=Module.require("event");
-    data.add(demo,"click",function(){console.log("a");});
+    data.event.add(demo,"click",function(){console.log("a");});
+    data.event.add(demo,"click",function(e,d){console.log(d);},"datac");
 </script>
 
 </html>
