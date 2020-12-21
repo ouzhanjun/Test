@@ -1,6 +1,8 @@
 (function Event(Module, $core, $data, $elem, $regExpr, $valid) {
     var rtypenamespace = /^([^.]*)(?:\.(.+)|)/;
 
+    //onunload  不管有没有和用户互动过，只要用户离开页面（关闭、刷新、跳转其他页面）就会触发
+
     var eventTypes = {
         Mouse: ["click", "contextmenu", "dblclick", "mousedown", "mouseenter", "mouseleave", "mousemove", "mouseover", "mouseout", "mouseup", "onwheel"],
         Keyboard: ["keydown", "keypress", "keyup"],
@@ -83,6 +85,22 @@
     }
 
     var specialEvents = {
+        load: { bindType: "load", noBubble: true },
+        click: {
+            bindType: "click",
+            setup: function (data) {
+                var el = this || data;
+
+                if ($regExpr.rcheckableType.test(el.type) &&
+                    el.click && $valid.nodeName(el, "input")) {
+                    
+                }
+            }
+        },
+        blur: { bindType: "blur" },
+        focus: { bindType: "focus" },
+        // 只有屏幕和用户互动过后，用户离开页面（关闭、刷新、跳转其他页面）才会触发
+        beforeunload: { bindType: "beforeunload" },
         focusin: { bindType: "focus" },
         focusout: { bindType: "blur" },
         mouseenter: { bindType: "mouseover" },
@@ -209,6 +227,9 @@
                 handlers = events[e.type] || [],
                 special = specialEvents[e.type] || {};
 
+            if (!evt.isPropagationStopped()) {
+                return;
+            }
             args.push(evt);
 
             for (i = 1; i < arguments.length; i++) {
@@ -218,9 +239,7 @@
                 new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)") :
                 null;
             i = 0;
-            while ((handleObj = handlers[i++])
-                && !evt.isPropagationStopped()
-                && !evt.isImmediatePropagationStopped()) {
+            while ((handleObj = handlers[i++]) && !evt.isImmediatePropagationStopped()) {
                 if (!rnamespace || !handleObj.namespace || rnamespace.test(handleObj.namespace)) {
                     evt.handleObj = handleObj;
                     if (handleObj.data) {
@@ -229,7 +248,6 @@
                     }
 
                     ret = handleObj.handler && (this.nodeType === 1) && handleObj.handler.apply(this, args);
-
                 }
             }
         },
