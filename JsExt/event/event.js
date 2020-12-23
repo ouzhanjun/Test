@@ -93,12 +93,34 @@
 
                 if ($regExpr.rcheckableType.test(el.type) &&
                     el.click && $valid.nodeName(el, "input")) {
-                    
+                    event.add(el, type, returnTrue);
+                }
+            },
+            trigger: function (data) {
+                var el = this || data;
+                if ($regExpr.rcheckableType.test(el.type) &&
+                    el.click && $valid.nodeName(el, "input")) {
+                    el.click();
+                    return false;
                 }
             }
         },
-        blur: { bindType: "blur" },
-        focus: { bindType: "focus" },
+        blur: {
+            bindType: "blur",
+            trigger: function () {
+                if (this === document.activeElement && this.blur) {
+                    this.blur();
+                    return false;
+                }
+            }
+        },
+        focus: { bindType: "focus" ,
+        trigger: function () {
+            if (this === document.activeElement && this.focus) {
+                this.focus();
+                return false;
+            }
+        }},
         // 只有屏幕和用户互动过后，用户离开页面（关闭、刷新、跳转其他页面）才会触发
         beforeunload: { bindType: "beforeunload" },
         focusin: { bindType: "focus" },
@@ -227,9 +249,6 @@
                 handlers = events[e.type] || [],
                 special = specialEvents[e.type] || {};
 
-            if (!evt.isPropagationStopped()) {
-                return;
-            }
             args.push(evt);
 
             for (i = 1; i < arguments.length; i++) {
