@@ -1,5 +1,4 @@
 (function Event(Module, $core, $data, $elem, $regExpr, $valid) {
-    var rtypenamespace = /^([^.]*)(?:\.(.+)|)/;
 
     //onunload  不管有没有和用户互动过，只要用户离开页面（关闭、刷新、跳转其他页面）就会触发
 
@@ -14,9 +13,11 @@
     var returnTrue = function () {
         return true;
     }
+
     var returnFalse = function () {
         return false;
     }
+
     var Event = function (src, props) {
         if (!(this instanceof Event)) {
             return new Event(src, props);
@@ -31,6 +32,9 @@
             this.target = src.target;
             this.currentTarget = src.currentTarget;
             this.relatedTarget = src.relatedTarget;
+        }
+        else {
+            this.type = src;
         }
 
         // Put explicitly provided properties onto the event object
@@ -57,7 +61,7 @@
 
             this.isDefaultPrevented = returnTrue;
 
-            if (e && !this.isSimulated) {
+            if (e) {
                 e.preventDefault();
             }
         },
@@ -67,7 +71,7 @@
 
             this.isPropagationStopped = returnTrue;
 
-            if (e && !this.isSimulated) {
+            if (e) {
                 e.stopPropagation();
             }
         },
@@ -76,60 +80,13 @@
 
             this.isImmediatePropagationStopped = returnTrue;
 
-            if (e && !this.isSimulated) {
+            if (e) {
                 e.stopImmediatePropagation();
             }
 
             this.stopPropagation();
         }
     }
-
-    var specialEvents = {
-        load: { bindType: "load", noBubble: true },
-        click: {
-            bindType: "click",
-            setup: function (data) {
-                var el = this || data;
-
-                if ($regExpr.rcheckableType.test(el.type) &&
-                    el.click && $valid.nodeName(el, "input")) {
-                    event.add(el, type, returnTrue);
-                }
-            },
-            trigger: function (data) {
-                var el = this || data;
-                if ($regExpr.rcheckableType.test(el.type) &&
-                    el.click && $valid.nodeName(el, "input")) {
-                    el.click();
-                    return false;
-                }
-            }
-        },
-        blur: {
-            bindType: "blur",
-            trigger: function () {
-                if (this === document.activeElement && this.blur) {
-                    this.blur();
-                    return false;
-                }
-            }
-        },
-        focus: { bindType: "focus" ,
-        trigger: function () {
-            if (this === document.activeElement && this.focus) {
-                this.focus();
-                return false;
-            }
-        }},
-        // 只有屏幕和用户互动过后，用户离开页面（关闭、刷新、跳转其他页面）才会触发
-        beforeunload: { bindType: "beforeunload" },
-        focusin: { bindType: "focus" },
-        focusout: { bindType: "blur" },
-        mouseenter: { bindType: "mouseover" },
-        mouseleave: { bindType: "mouseout" },
-        pointerenter: { bindType: "pointerover" },
-        pointerleave: { bindType: "pointerout" }
-    };
 
     var detachFun, attachFuc;
 
@@ -184,7 +141,7 @@
     var event = {
         add: function (elem, types, handler, data) {
 
-            var handleObj, eventHandle, tmp, special,
+            var handleObj, eventHandle, tmp,
                 events, t, namespaces, origType, handlers,
                 elemData = $data.get(elem);
 
@@ -202,7 +159,9 @@
 
             if (!(eventHandle = elemData.handle)) {
                 eventHandle = elemData.handle = function (e) {
-                    event.dispatch.apply(elem, arguments);
+                    //见trigger方法，使用preventTriggered避免同一事件重复调用
+                    return event.preventTriggered !== e.type ?
+                        event.dispatch.apply(elem, arguments) : undefined;
                 };
             }
 
@@ -212,15 +171,13 @@
 
             while (t--) {
                 //带命名空间的事件 ["click.ns.ns1", "click", "ns.ns1", index: 0, input: "click.ns.ns1", groups: undefined]
-                tmp = rtypenamespace.exec(types[t]) || [];
-                origType = tmp[1];
-                namespaces = (tmp[2] || "");
+                tmp = $regExpr.rtypenamespace.exec(types[t]) || [];
+                type = origType = tmp[1];
+                namespaces = (tmp[2] || "").split(".");
 
-                if (!origType) {
+                if (!type) {
                     continue;
                 }
-
-                type = specialEvents[origType] || origType;
 
                 handleObj = {
                     type: type,
@@ -228,7 +185,7 @@
                     data: data,
                     handler: handler,
                     guid: handler.guid,
-                    namespaces: namespaces
+                    namespace: namespaces.join(".")
                 };
 
                 if (!(handlers = events[type])) {
@@ -240,37 +197,113 @@
                 handlers.push(handleObj);
             }
         },
-        dispatch: function (nativeEvent) {
-            var i, j, ret,
-                events = $data.get(this, "events"),
-                args = [],
-                evt = event.fixEventArg(nativeEvent),
-                handleObj,
-                handlers = events[e.type] || [],
-                special = specialEvents[e.type] || {};
+        remove: function (elem, types, handler, mappedTypes) {
+            var elemData = $data.hasData(elem) && $data.get(elem);
+            var types, namespaces;
 
-            args.push(evt);
+            if (!elemData || !(events = elemData.events)) {
+                return;
+            }
+
+            types = (types || "").match($regExpr.rnothtmlwhite) || [""];
+
+            t = types.length;
+            while (t--) {
+                tmp = $regExpr.rtypenamespace.exec(types[t]) || [];
+                type = origType = tmp[1];
+                namespaces = (tmp[2] || "").split(".");
+
+                if (!type) {
+                    for (type in events) {
+                        event.remove(elem, type + types[t], handler, selector, true);
+                    }
+                    continue;
+                }
+
+                handlers = events[type] || [];
+                tmp = tmp[2] &&
+                    new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)");
+
+                origCount = j = handlers.length;
+                while (j--) {
+                    handleObj = handlers[j];
+
+                    if ((mappedTypes || origType === handleObj.origType) &&
+                        (!handler || handler.guid === handleObj.guid) &&
+                        (!tmp || tmp.test(handleObj.namespace))
+                    ) {
+                        handlers.splice(j, 1);
+                    }
+                }
+
+                if (origCount && !handlers.length) {
+                    delete events[type];
+                }
+            }
+
+            if ($valid.isEmptyObject(events)) {
+                $data.remove(elem, "handle events");
+            }
+        },
+        dispatch: function (nativeEvent) {
+            var i, j, ret, handleObj, args = [],
+                events = $data.get(this, "events"),
+                extEvent = event.extendEvent(nativeEvent),
+                handlerQueue,
+                handlers = events[extEvent.type] || [];
+            //args,第一个是事件参数，剩余是其他参数
+            args.push(extEvent);
 
             for (i = 1; i < arguments.length; i++) {
                 args.push(arguments[i]);
             }
-            var rnamespace = event.namespace ?
-                new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)") :
-                null;
-            i = 0;
-            while ((handleObj = handlers[i++]) && !evt.isImmediatePropagationStopped()) {
-                if (!rnamespace || !handleObj.namespace || rnamespace.test(handleObj.namespace)) {
-                    evt.handleObj = handleObj;
-                    if (handleObj.data) {
-                        evt.data = handleObj.data;
-                        args.push(handleObj.data);
-                    }
 
-                    ret = handleObj.handler && (this.nodeType === 1) && handleObj.handler.apply(this, args);
+            extEvent.delegateTarget = this;
+
+            // Determine handlers
+            handlerQueue = event.handlers.call(this, extEvent, handlers);
+
+            i = 0;
+            var matched;
+            while ((matched = handlerQueue[i++]) && !extEvent.isPropagationStopped()) {
+                extEvent.currentTarget = matched.elem;
+                j = 0;
+                while ((handleObj = matched.handlers[j++]) &&
+                    !extEvent.isImmediatePropagationStopped()) {
+                    //event.rnamespace 由trigger生成
+                    if (!extEvent.rnamespace || !handleObj.namespace ||
+                        extEvent.rnamespace.test(handleObj.namespace)) {
+
+                        if (handleObj.data) {
+                            args.push(handleObj.data);
+                        }
+
+                        ret = handleObj.handler && handleObj.handler.apply(this, args);
+
+                        //如果返回 false 则停止冒泡
+                        if (ret !== undefined) {
+                            if ((extEvent.result = ret) === false) {
+                                extEvent.preventDefault();
+                                extEvent.stopPropagation();
+                            }
+                        }
+                    }
                 }
             }
+
+            return extEvent.result;
         },
-        fixEventArg: function (orgEvent) {
+        handlers: function (event, handlers) {
+            var i,
+                handlerQueue = [],
+                cur = event.target;
+            if (handlers.length) {
+                handlerQueue.push({ elem: cur, handlers: handlers });
+            }
+
+            return handlerQueue;
+        },
+        extendEvent: function (orgEvent) {
             return (orgEvent && orgEvent instanceof Event && orgEvent.isFixed) ?
                 orgEvent : new Event(orgEvent);
         },
@@ -300,6 +333,126 @@
                     });
                 }
             });
+        },
+        trigger: function (event, data, elem, onlyHandlers) {
+            //onlyHandlers 只处理handle的事件，不处理原生事件onclick等
+            //大部分情况下event参数是type,因为event需要另外构造
+            var type = event.hasOwnProperty("type") ? event.type:event,
+                eventPath = [elem || document], //事件路径
+                namespaces = event.hasOwnProperty("namespace") ? event.namespace.split(".") : [],
+                ontype,
+                data,
+                lastElement,
+                tmp,
+                handle,
+                cur = tmp = lastElement = elem || document,
+                args;
+            // Don't do events on text and comment nodes
+            if (elem.nodeType === 3 || elem.nodeType === 8) {
+                return;
+            }
+
+            if (type.indexOf(".") > -1) {
+                namespaces = type.split(".");
+                type = namespaces.shift();
+            }
+
+            ontype = type && "on" + type;
+
+            event = event instanceof Event ? event :
+                new Event(type, typeof event === "object" && event);
+
+            //onlyHandlers 只处理handle的事件，不处理原生事件onclick等
+            event.isTrigger = onlyHandlers ? 2 : 3;
+            event.namespace = namespaces.join(".");
+            event.rnamespace = event.namespace ?
+                new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)") :
+                null;
+
+            //清空event结果，避免被复用
+            event.result = undefined;
+            if (!event.target) {
+                event.target = elem;
+            }
+
+            //传递的参数
+            args = [event];
+            if (data) {
+                args.push(data);
+            }
+
+            //提前决定事件冒泡的路径,冒泡到document,window,关注全局ownerdocument
+            if (!onlyHandlers && elem != window) {
+				cur = cur.parentNode;
+                for (; cur; cur = cur.parentNode) {
+                    eventPath.push(cur);
+                    tmp = cur;
+                }
+
+                if (tmp === (elem.ownerDocument || document)) {
+                    //这里的parentWindow是做什么用的？defaultView 用于firefox 框架下
+                    eventPath.push(tmp.defaultView || tmp.parentWindow || window);
+                }
+            }
+
+            //触发所有的时间路径上面的事件处理
+            i = 0;
+            while ((cur = eventPath[i++]) && !event.isPropagationStopped()) {
+                lastElement = cur;
+                event.type = type;
+
+                handle = ($data.get(cur, "events") || Object.create(null))[event.type] &&
+                    $data.get(cur, "handle");
+
+                if (handle) {
+                    handle.apply(cur, args);
+                }
+                //原生的事件及处理程序
+                handle = ontype && cur[ontype];
+                //如果有绑定原生的onclick事件
+                if (handle && handle.apply && $valid.acceptData(cur)) {
+                    //执行onclick等事件处理程序
+                    event.result = handle.apply(cur, args);
+                    if (event.result === false) {
+
+                        //阻止元素默认行为，例如提交表单
+                        event.preventDefault();
+                    }
+                }
+            }
+            var stopPropagationCallback = function (e) {
+                e.stopPropagation();
+            };
+            //阻止默认行为，比如触发<a>的click事件，但不会跳转
+            if (!onlyHandlers && !event.isDefaultPrevented) {
+                if ($valid.acceptData(elem)) {
+                    if (ontype && typeof elem[type] === "function" && elem != window) {
+                        tmp = elem[ontype];
+
+                        if (tmp) {
+                            elem[ontype] = null;
+                        }
+                        //阻止重复触发同样的事件，因为已经冒泡
+                        event.preventTriggered = type;
+
+                        if (event.isPropagationStopped()) {
+                            lastElement.addEventListener(type, stopPropagationCallback);
+                        }
+                        elem[type]();
+
+                        if (event.isPropagationStopped()) {
+                            lastElement.removeEventListener(type, stopPropagationCallback);
+                        }
+
+                        event.preventTriggered = undefined;
+
+                        if (tmp) {
+                            elem[ontype] = tmp;
+                        }
+                    }
+                }
+            }
+            return event.result;
         }
     }
 

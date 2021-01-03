@@ -37,7 +37,9 @@
     
     var data=Module.require("event");
     data.event.add(demo,"click",function(){console.log("a");});
+    data.event.remove(demo,"click");
     data.event.add(demo,"click",function(e,d){console.log(d);},"datac");
+    data.event.trigger("click","d",demo);
 </script>
 
 </html>
